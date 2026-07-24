@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { background: #14161A; color: #E7E9EE; }
+
+.pxl-card { background: #1B1E24; border: 1px solid #2C313A; border-radius: 10px; }
+.pxl-input {
+  background: #14161A; border: 1px solid #2C313A; border-radius: 8px;
+  padding: 8px 12px; color: #E7E9EE; outline: none; width: 100%;
+}
+.pxl-input:focus { border-color: #5B8CFF; }
+.pxl-btn {
+  background: #5B8CFF; color: #0C0D10; font-weight: 600; border-radius: 8px;
+  padding: 8px 16px; transition: opacity .15s;
+}
+.pxl-btn:hover { opacity: .85; }
+.pxl-btn-outline {
+  border: 1px solid #2C313A; border-radius: 8px; padding: 8px 16px; color: #E7E9EE;
+}
+.pxl-btn-outline:hover { border-color: #5B8CFF; }
+.pxl-btn-danger { background: #F0596B; color: #14161A; font-weight: 600; border-radius: 8px; padding: 8px 16px; }
+.pxl-badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 600; letter-spacing: .02em; }
+
+.pxl-markdown { line-height: 1.6; }
+.pxl-markdown p { margin: 0.4em 0; }
+.pxl-markdown ul, .pxl-markdown ol { margin: 0.4em 0 0.4em 1.2em; }
+.pxl-markdown ul { list-style: disc; }
+.pxl-markdown ol { list-style: decimal; }
+.pxl-markdown h1, .pxl-markdown h2, .pxl-markdown h3 { font-weight: 700; margin: 0.6em 0 0.3em; }
+.pxl-markdown h1 { font-size: 1.4em; }
+.pxl-markdown h2 { font-size: 1.2em; }
+.pxl-markdown h3 { font-size: 1.05em; }
+.pxl-markdown blockquote { border-left: 3px solid #2C313A; padding-left: 0.8em; color: #8A93A3; margin: 0.4em 0; }
+.pxl-markdown img { display: block; }
+.pxl-markdown pre { background: #14161A; border: 1px solid #2C313A; border-radius: 8px; padding: 0.6em; overflow-x: auto; }
