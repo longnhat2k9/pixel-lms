@@ -7,17 +7,24 @@ import rehypeKatex from "rehype-katex";
 // content: lessons, questions/answers, posts. Supports:
 //  - Markdown (headings, lists, tables, bold/italic, images ![alt](url), links)
 //  - LaTeX math via $inline$ and $$block$$ (rendered with KaTeX)
-export default function MarkdownRenderer({ content, className = "" }) {
+//
+// Pass `inline` for short single-line content (question stems, answer
+// options) so paragraphs don't force a block-level line break — the text
+// flows naturally next to a number/bullet/letter marker instead of dropping
+// to its own line.
+export default function MarkdownRenderer({ content, className = "", inline = false }) {
   if (!content) return null;
+  const Wrapper = inline ? "span" : "div";
   return (
-    <div className={`pxl-markdown ${className}`}>
+    <Wrapper className={`pxl-markdown ${inline ? "pxl-markdown-inline" : ""} ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex]}
         components={{
+          p: inline ? (props) => <>{props.children}</> : (props) => <p {...props} />,
           img: (props) => (
             // eslint-disable-next-line @next/next/no-img-element
-            <img {...props} className="max-w-full rounded-pixel my-2" loading="lazy" alt={props.alt || ""} />
+            <img {...props} className={inline ? "inline-block h-5 align-text-bottom" : "max-w-full rounded-pixel my-2"} loading="lazy" alt={props.alt || ""} />
           ),
           a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-accent underline" />,
           table: (props) => <table {...props} className="border-collapse w-full text-sm my-2" />,
@@ -28,6 +35,6 @@ export default function MarkdownRenderer({ content, className = "" }) {
       >
         {content}
       </ReactMarkdown>
-    </div>
+    </Wrapper>
   );
 }

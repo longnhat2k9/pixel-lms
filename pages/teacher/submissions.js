@@ -104,7 +104,7 @@ export default function SubmissionsPage() {
                     <div key={q.id} className="bg-panel2 rounded-pixel p-3">
                       <div className="text-sm font-medium mb-1">
                         <span className="text-mute">Câu {idx + 1} ({q.points} điểm):</span>{" "}
-                        <MarkdownRenderer content={q.content} className="inline" />
+                        <MarkdownRenderer content={q.content} inline />
                       </div>
                       <div className="text-sm text-gray-300 mb-2">Trả lời: {given ?? <span className="text-mute">— chưa trả lời —</span>}</div>
                       {needsManual && (

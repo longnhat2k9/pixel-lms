@@ -126,7 +126,7 @@ export default function ExamTake() {
           <div key={q.id} className="pxl-card p-5">
             <div className="text-sm font-medium mb-3">
               <span className="text-mute">Câu {idx + 1} ({q.points} điểm):</span>{" "}
-              <MarkdownRenderer content={q.content} className="inline" />
+              <MarkdownRenderer content={q.content} inline />
             </div>
 
             {(q.type === "choice2" || q.type === "choice4") && (
@@ -140,7 +140,7 @@ export default function ExamTake() {
                       checked={answers[q.id] === String(i)}
                       onChange={() => setAnswer(q.id, String(i))}
                     />
-                    <MarkdownRenderer content={opt} className="inline" />
+                    <MarkdownRenderer content={opt} inline />
                   </label>
                 ))}
               </div>
