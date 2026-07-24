@@ -1,12 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
+import { dashboardPath } from "../lib/useUser";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const router = useRouter();
+
+  // If already logged in (e.g. came back from the homepage), skip the form
+  // entirely instead of asking to log in again.
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.user) router.replace(dashboardPath(d.user.role));
+        else setCheckingSession(false);
+      })
+      .catch(() => setCheckingSession(false));
+  }, []);
 
   async function submit(e) {
     e.preventDefault();
@@ -20,8 +35,7 @@ export default function Login() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      const role = data.user.role;
-      router.push(role === "admin" ? "/admin" : role === "teacher" ? "/teacher" : "/student");
+      router.push(dashboardPath(data.user.role));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -29,10 +43,12 @@ export default function Login() {
     }
   }
 
+  if (checkingSession) return null;
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-ink">
       <form onSubmit={submit} className="pxl-card w-full max-w-sm p-8">
-        <div className="text-2xl font-bold mb-1">Pixel LMS</div>
+        <Link href="/" className="text-2xl font-bold mb-1 block hover:text-accent">Pixel LMS</Link>
         <div className="text-mute text-sm mb-6">Đăng nhập để tiếp tục</div>
         {error && <div className="mb-4 text-sm text-danger">{error}</div>}
         <label className="text-xs text-mute">Tên đăng nhập</label>

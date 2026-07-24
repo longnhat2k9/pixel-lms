@@ -23,7 +23,18 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     if (!access.view) return res.status(403).json({ error: "Bạn không có quyền xem bài học này." });
-    return res.status(200).json({ lesson });
+    const { rows: ctxRows } = await DB.courses(
+      `SELECT co.title AS course_title, ch.title AS chapter_title
+       FROM courses co, chapters ch
+       WHERE co.id = $1 AND ch.id = $2`,
+      [lesson.course_id, lesson.chapter_id]
+    );
+    return res.status(200).json({
+      lesson,
+      canEdit: access.edit,
+      courseTitle: ctxRows[0]?.course_title || "",
+      chapterTitle: ctxRows[0]?.chapter_title || "",
+    });
   }
 
   if (!access.edit) return res.status(403).json({ error: "Bạn không có quyền chỉnh sửa bài học này." });

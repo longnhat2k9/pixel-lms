@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import MarkdownRenderer from "../components/MarkdownRenderer";
+import { dashboardPath } from "../lib/useUser";
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
+  const [user, setUser] = useState(null); // null = not logged in (default, no redirect here)
 
   useEffect(() => {
     fetch("/api/posts").then((r) => r.json()).then((d) => setPosts(d.posts || []));
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setUser(d?.user || null))
+      .catch(() => setUser(null));
   }, []);
 
   return (
@@ -14,7 +20,13 @@ export default function Home() {
       <header className="border-b border-line">
         <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="font-bold text-lg">Pixel LMS</div>
-          <Link href="/login" className="pxl-btn">Đăng nhập</Link>
+          {user ? (
+            <Link href={dashboardPath(user.role)} className="pxl-btn">
+              Vào hệ thống ({user.fullName})
+            </Link>
+          ) : (
+            <Link href="/login" className="pxl-btn">Đăng nhập</Link>
+          )}
         </div>
       </header>
 

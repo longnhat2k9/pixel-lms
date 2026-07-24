@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { apiFetch } from "../lib/useUser";
-import MarkdownRenderer from "./MarkdownRenderer";
 
 export default function CourseEditor({ courseId, isAdmin }) {
   const [course, setCourse] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [error, setError] = useState("");
   const [newChapterTitle, setNewChapterTitle] = useState("");
-  const [newLesson, setNewLesson] = useState({}); // { [chapterId]: {title, content} }
-  const [editingLesson, setEditingLesson] = useState(null);
+  const [newLessonTitle, setNewLessonTitle] = useState({}); // { [chapterId]: title }
   const [access, setAccess] = useState(null);
   const [showAccess, setShowAccess] = useState(false);
 
@@ -48,13 +47,13 @@ export default function CourseEditor({ courseId, isAdmin }) {
   }
 
   async function addLesson(chapterId) {
-    const draft = newLesson[chapterId];
-    if (!draft?.title?.trim()) return;
+    const title = newLessonTitle[chapterId];
+    if (!title?.trim()) return;
     try {
       await apiFetch(`/api/chapters/${chapterId}`, {
-        method: "POST", body: JSON.stringify({ title: draft.title, content: draft.content || "" }),
+        method: "POST", body: JSON.stringify({ title, content: "" }),
       });
-      setNewLesson({ ...newLesson, [chapterId]: { title: "", content: "" } });
+      setNewLessonTitle({ ...newLessonTitle, [chapterId]: "" });
       load();
     } catch (e) { setError(e.message); }
   }
@@ -63,17 +62,6 @@ export default function CourseEditor({ courseId, isAdmin }) {
     if (!confirm("Xóa bài học này?")) return;
     try { await apiFetch(`/api/lessons/${id}`, { method: "DELETE" }); load(); }
     catch (e) { setError(e.message); }
-  }
-
-  async function saveLesson() {
-    try {
-      await apiFetch(`/api/lessons/${editingLesson.id}`, {
-        method: "PUT",
-        body: JSON.stringify({ title: editingLesson.title, content: editingLesson.content }),
-      });
-      setEditingLesson(null);
-      load();
-    } catch (e) { setError(e.message); }
   }
 
   async function toggleAccess(userId) {
@@ -132,43 +120,23 @@ export default function CourseEditor({ courseId, isAdmin }) {
 
             <div className="space-y-2 mb-3">
               {ch.lessons.map((l) => (
-                <div key={l.id} className="bg-panel2 rounded-pixel p-3">
-                  {editingLesson?.id === l.id ? (
-                    <div className="space-y-2">
-                      <input className="pxl-input" value={editingLesson.title}
-                        onChange={(e) => setEditingLesson({ ...editingLesson, title: e.target.value })} />
-                      <textarea className="pxl-input font-mono text-sm" rows={6} value={editingLesson.content}
-                        onChange={(e) => setEditingLesson({ ...editingLesson, content: e.target.value })} />
-                      <div className="text-xs text-mute">
-                        Hỗ trợ Markdown & LaTeX: chèn ảnh bằng <code>![mô tả](url)</code>, công thức bằng <code>$...$</code> hoặc <code>$$...$$</code>.
-                      </div>
-                      <div className="flex gap-2 justify-end">
-                        <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => setEditingLesson(null)}>Hủy</button>
-                        <button className="pxl-btn text-xs px-2 py-1" onClick={saveLesson}>Lưu</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium">{l.title}</div>
-                        <div className="text-xs text-mute mt-1 line-clamp-3">
-                          <MarkdownRenderer content={l.content} />
-                        </div>
-                      </div>
-                      <div className="flex gap-2 shrink-0">
-                        <button className="text-accent text-xs" onClick={() => setEditingLesson(l)}>Sửa</button>
-                        <button className="text-danger text-xs" onClick={() => deleteLesson(l.id)}>Xóa</button>
-                      </div>
-                    </div>
-                  )}
+                <div key={l.id} className="bg-panel2 rounded-pixel px-4 py-3 flex items-center justify-between gap-3">
+                  <Link href={`/lessons/${l.id}`} className="text-sm font-medium hover:text-accent min-w-0 truncate">
+                    {l.title}
+                  </Link>
+                  <div className="flex gap-3 shrink-0">
+                    <Link href={`/lessons/${l.id}`} className="text-accent text-xs">Mở bài học</Link>
+                    <button className="text-danger text-xs" onClick={() => deleteLesson(l.id)}>Xóa</button>
+                  </div>
                 </div>
               ))}
+              {ch.lessons.length === 0 && <div className="text-xs text-mute">Chưa có bài học.</div>}
             </div>
 
             <div className="flex gap-2">
               <input className="pxl-input" placeholder="Tên bài học mới"
-                value={newLesson[ch.id]?.title || ""}
-                onChange={(e) => setNewLesson({ ...newLesson, [ch.id]: { ...newLesson[ch.id], title: e.target.value } })} />
+                value={newLessonTitle[ch.id] || ""}
+                onChange={(e) => setNewLessonTitle({ ...newLessonTitle, [ch.id]: e.target.value })} />
               <button className="pxl-btn-outline text-sm whitespace-nowrap" onClick={() => addLesson(ch.id)}>+ Thêm bài học</button>
             </div>
           </div>

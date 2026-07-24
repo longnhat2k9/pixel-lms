@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import Layout from "../../../components/Layout";
-import MarkdownRenderer from "../../../components/MarkdownRenderer";
 import { useUser, apiFetch } from "../../../lib/useUser";
 
 export default function StudentCourseDetail() {
@@ -11,7 +11,6 @@ export default function StudentCourseDetail() {
   const [course, setCourse] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [error, setError] = useState("");
-  const [openLesson, setOpenLesson] = useState(null);
 
   useEffect(() => {
     if (!user || !id) return;
@@ -37,19 +36,13 @@ export default function StudentCourseDetail() {
                 <div className="font-semibold mb-3">{ch.title}</div>
                 <div className="space-y-2">
                   {ch.lessons.map((l) => (
-                    <div key={l.id} className="bg-panel2 rounded-pixel p-3">
-                      <button
-                        className="text-sm font-medium w-full text-left"
-                        onClick={() => setOpenLesson(openLesson === l.id ? null : l.id)}
-                      >
-                        {l.title}
-                      </button>
-                      {openLesson === l.id && (
-                        <div className="text-sm text-gray-300 mt-2">
-                          <MarkdownRenderer content={l.content} />
-                        </div>
-                      )}
-                    </div>
+                    <Link
+                      key={l.id}
+                      href={`/lessons/${l.id}`}
+                      className="block bg-panel2 rounded-pixel px-4 py-3 text-sm font-medium hover:text-accent transition"
+                    >
+                      {l.title}
+                    </Link>
                   ))}
                   {ch.lessons.length === 0 && <div className="text-xs text-mute">Chưa có bài học.</div>}
                 </div>
