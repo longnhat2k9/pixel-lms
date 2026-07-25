@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import Layout from "../../components/Layout";
 import MarkdownRenderer from "../../components/MarkdownRenderer";
 import { useUser, apiFetch } from "../../lib/useUser";
 
 const COURSE_PATH = { admin: "/admin/courses", teacher: "/teacher/courses", student: "/student/courses" };
-
-const STATUS_LABEL = { scheduled: "Đã lên lịch", active: "Đang diễn ra", ended: "Đã đóng" };
 
 export default function LessonPage() {
   const user = useUser(["admin", "teacher", "student"]);
@@ -15,13 +14,12 @@ export default function LessonPage() {
 
   const [lesson, setLesson] = useState(null);
   const [meta, setMeta] = useState({ courseTitle: "", chapterTitle: "", canEdit: false });
-  const [linkedSessions, setLinkedSessions] = useState([]);
-  const [allSessions, setAllSessions] = useState([]);
+  const [linkedPapers, setLinkedPapers] = useState([]);
+  const [allPapers, setAllPapers] = useState([]);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ title: "", content: "" });
-  const [showSessionPicker, setShowSessionPicker] = useState(false);
-  const [entering, setEntering] = useState(null);
+  const [showPaperPicker, setShowPaperPicker] = useState(false);
 
   async function load() {
     try {
@@ -29,15 +27,15 @@ export default function LessonPage() {
       setLesson(d.lesson);
       setMeta({ courseTitle: d.courseTitle, chapterTitle: d.chapterTitle, canEdit: d.canEdit });
       setDraft({ title: d.lesson.title, content: d.lesson.content });
-      const ex = await apiFetch(`/api/lessons/${id}/exams`);
-      setLinkedSessions(ex.sessions);
+      const p = await apiFetch(`/api/lessons/${id}/practice`);
+      setLinkedPapers(p.papers);
     } catch (e) { setError(e.message); }
   }
 
   useEffect(() => { if (user && id) load(); }, [user, id]);
 
-  async function loadAllSessions() {
-    try { const d = await apiFetch("/api/exams/sessions"); setAllSessions(d.sessions); }
+  async function loadAllPapers() {
+    try { const d = await apiFetch("/api/questionbank/papers"); setAllPapers(d.papers); }
     catch (e) { setError(e.message); }
   }
 
@@ -57,31 +55,16 @@ export default function LessonPage() {
     } catch (e) { setError(e.message); }
   }
 
-  async function toggleSessionLink(sessionId) {
-    const current = new Set(linkedSessions.map((s) => s.id));
-    if (current.has(sessionId)) current.delete(sessionId); else current.add(sessionId);
+  async function togglePaperLink(paperId) {
+    const current = new Set(linkedPapers.map((p) => p.id));
+    if (current.has(paperId)) current.delete(paperId); else current.add(paperId);
     try {
-      await apiFetch(`/api/lessons/${id}/exams`, {
-        method: "POST", body: JSON.stringify({ sessionIds: Array.from(current) }),
+      await apiFetch(`/api/lessons/${id}/practice`, {
+        method: "POST", body: JSON.stringify({ paperIds: Array.from(current) }),
       });
-      const ex = await apiFetch(`/api/lessons/${id}/exams`);
-      setLinkedSessions(ex.sessions);
+      const p = await apiFetch(`/api/lessons/${id}/practice`);
+      setLinkedPapers(p.papers);
     } catch (e) { setError(e.message); }
-  }
-
-  async function startPractice(session) {
-    setEntering(session.id);
-    try {
-      const d = await apiFetch("/api/exams/enter", { method: "POST", body: JSON.stringify({ code: session.session_code }) });
-      if (d.waiting) {
-        router.push(`/exam/waiting/${d.sessionCode}`);
-      } else {
-        router.push(`/exam/take/${d.attemptId}`);
-      }
-    } catch (e) {
-      setError(e.message);
-      setEntering(null);
-    }
   }
 
   if (!user) return null;
@@ -137,56 +120,51 @@ export default function LessonPage() {
               {meta.canEdit && (
                 <button
                   className="pxl-btn-outline text-xs px-2 py-1"
-                  onClick={() => { setShowSessionPicker(!showSessionPicker); if (!allSessions.length) loadAllSessions(); }}
+                  onClick={() => { setShowPaperPicker(!showPaperPicker); if (!allPapers.length) loadAllPapers(); }}
                 >
-                  {showSessionPicker ? "Đóng" : "Gán đề thi"}
+                  {showPaperPicker ? "Đóng" : "Gán đề thi"}
                 </button>
               )}
             </div>
 
-            {showSessionPicker && (
+            {meta.canEdit && (
+              <div className="text-xs text-mute mb-3">
+                Học sinh có thể bấm làm bài trực tiếp, không giới hạn số lần làm lại (khác với ca thi ở mục "Thi").
+              </div>
+            )}
+
+            {showPaperPicker && (
               <div className="mb-4 grid gap-2 max-h-56 overflow-y-auto border-b border-line pb-4">
-                {allSessions.length === 0 && <div className="text-xs text-mute">Chưa có ca thi nào. Tạo ca thi ở mục "Thi" trước.</div>}
-                {allSessions.map((s) => (
-                  <label key={s.id} className="flex items-center gap-2 text-sm bg-panel2 rounded-pixel px-3 py-2 cursor-pointer">
+                {allPapers.length === 0 && <div className="text-xs text-mute">Chưa có đề thi nào. Tạo đề thi ở mục "Đề thi" trước.</div>}
+                {allPapers.map((p) => (
+                  <label key={p.id} className="flex items-center gap-2 text-sm bg-panel2 rounded-pixel px-3 py-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={linkedSessions.some((l) => l.id === s.id)}
-                      onChange={() => toggleSessionLink(s.id)}
+                      checked={linkedPapers.some((l) => l.id === p.id)}
+                      onChange={() => togglePaperLink(p.id)}
                     />
-                    <span>{s.title}</span>
-                    <span className="text-xs text-mute font-mono ml-auto">{s.session_code}</span>
+                    <span>{p.title}</span>
                   </label>
                 ))}
               </div>
             )}
 
-            {linkedSessions.length === 0 ? (
-              <div className="text-sm text-mute">Chưa có đề thi thực hành nào được gán cho bài học này.</div>
+            {linkedPapers.length === 0 ? (
+              <div className="text-sm text-mute">Chưa có đề thi luyện tập nào được gán cho bài học này.</div>
             ) : (
               <div className="space-y-2">
-                {linkedSessions.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between bg-panel2 rounded-pixel px-4 py-3">
+                {linkedPapers.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between bg-panel2 rounded-pixel px-4 py-3">
                     <div>
-                      <div className="text-sm font-medium">{s.title}</div>
-                      <div className="text-xs text-mute">{STATUS_LABEL[s.status]} · {s.time_limit_minutes} phút</div>
+                      <div className="text-sm font-medium">{p.title}</div>
+                      <div className="text-xs text-mute">{p.question_count} câu hỏi</div>
                     </div>
                     {user.role === "student" ? (
-                      <button
-                        className="pxl-btn text-xs px-3 py-1.5"
-                        disabled={s.status === "ended" || entering === s.id}
-                        onClick={() => startPractice(s)}
-                      >
-                        {entering === s.id
-                          ? "Đang vào..."
-                          : s.status === "active"
-                          ? "Bắt đầu làm bài"
-                          : s.status === "scheduled"
-                          ? "Chờ mở ca thi"
-                          : "Đã đóng"}
-                      </button>
+                      <Link href={`/practice/${p.id}`} className="pxl-btn text-xs px-3 py-1.5">
+                        Làm bài
+                      </Link>
                     ) : (
-                      <span className="text-xs text-mute font-mono">{s.session_code}</span>
+                      <Link href={`/practice/${p.id}`} className="text-xs text-accent">Xem thử</Link>
                     )}
                   </div>
                 ))}

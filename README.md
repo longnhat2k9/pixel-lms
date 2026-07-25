@@ -76,8 +76,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ## 4. Khởi tạo database (chạy 1 lần — và mỗi khi có bảng mới)
 
 > Nếu bạn đã deploy trước đó và tải bản cập nhật này về, hãy **gọi lại `/api/setup` một lần nữa**
-> trước khi dùng tính năng "Gán đề thi vào bài học" — bản cập nhật này thêm bảng mới
-> `lesson_exam_links` vào DB Khóa học. Việc gọi lại hoàn toàn an toàn, không xóa dữ liệu cũ.
+> trước khi dùng tính năng "Gán đề thi luyện tập vào bài học" — bản cập nhật này thêm bảng mới
+> `lesson_practice_links` vào DB Khóa học. Việc gọi lại hoàn toàn an toàn, không xóa dữ liệu cũ.
 
 Sau khi deploy xong, mở trình duyệt và truy cập:
 
@@ -155,10 +155,14 @@ pages/api/         Toàn bộ API routes theo từng module
 pages/admin/       Giao diện Admin (tài khoản, khóa học)
 pages/teacher/     Giao diện Giáo viên (khóa học, đề thi, thi, bài làm, bài viết) — Admin cũng dùng chung các trang này
 pages/student/     Giao diện Học sinh (khóa học, vào thi, bài làm của tôi)
-pages/exam/take/   Màn hình làm bài thi (đếm giờ, autosave mỗi 10 giây, tự nộp khi hết giờ)
+pages/exam/take/   Màn hình làm bài thi có tính giờ (ca thi từ mục "Thi", đếm giờ, autosave, tự nộp khi hết giờ)
+pages/exam/waiting/[code].js  Phòng chờ ca thi: học sinh đứng yên ở đây, tự động vào thi ngay khi
+                        giáo viên mở ca thi (poll trạng thái mỗi 3 giây)
+pages/practice/[paperId].js  Luyện tập không giới hạn số lần: chấm điểm ngay, không tính giờ, không
+                        cần ca thi/mã — dùng cho đề thi được gán dưới bài học
 pages/lessons/[id].js  Trang riêng cho từng bài học (đọc tập trung, giáo viên/admin sửa nội dung
-                        và gán đề thi thực hành ngay bên dưới bài học; học sinh bấm "Bắt đầu làm bài"
-                        để vào thẳng ca thi đã gán, không cần nhập mã)
+                        và gán đề thi luyện tập ngay bên dưới bài học; học sinh bấm "Làm bài" để
+                        luyện tập ngay, làm lại bao nhiêu lần cũng được)
 ```
 
 ---

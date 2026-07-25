@@ -87,6 +87,14 @@ export default async function handler(req, res) {
         PRIMARY KEY (lesson_id, session_id)
       );
     `);
+    await DB.courses(`
+      CREATE TABLE IF NOT EXISTS lesson_practice_links (
+        lesson_id UUID NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+        paper_id UUID NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (lesson_id, paper_id)
+      );
+    `);
     results.courses = "ok";
   } catch (e) {
     results.courses = `ERROR: ${e.message}`;
