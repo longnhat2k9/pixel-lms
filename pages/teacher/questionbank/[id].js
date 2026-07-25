@@ -187,6 +187,15 @@ export default function PaperDetail() {
     catch (e) { setError(e.message); }
   }
 
+  async function toggleShowAnswers() {
+    try {
+      await apiFetch(`/api/questionbank/papers/${id}`, {
+        method: "PUT", body: JSON.stringify({ show_answers: !paper.show_answers }),
+      });
+      load();
+    } catch (e) { setError(e.message); }
+  }
+
   if (!user || !paper) return user ? <Layout user={user}><div className="text-mute">Đang tải...</div></Layout> : null;
 
   return (
@@ -210,7 +219,16 @@ export default function PaperDetail() {
           </button>
         </div>
       </div>
-      <p className="text-mute mb-6 text-sm">{paper.description}</p>
+      <p className="text-mute mb-3 text-sm">{paper.description}</p>
+
+      <label className="pxl-card p-4 mb-6 flex items-center gap-3 cursor-pointer w-fit">
+        <input type="checkbox" className="w-4 h-4" checked={!!paper.show_answers} onChange={toggleShowAnswers} />
+        <div>
+          <div className="text-sm font-medium">Học sinh được xem đáp án sau khi nộp bài</div>
+          <div className="text-xs text-mute">Áp dụng cho cả luyện tập và ca thi dùng đề này. Tắt để chỉ hiện điểm, không lộ đáp án đúng.</div>
+        </div>
+      </label>
+
       {error && <div className="mb-4 text-sm text-danger">{error}</div>}
 
       <form onSubmit={addQuestion} className="pxl-card p-5 mb-8 space-y-3">

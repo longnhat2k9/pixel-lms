@@ -78,7 +78,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 > Nếu bạn đã deploy trước đó và tải bản cập nhật này về, hãy **gọi lại `/api/setup` một lần nữa**
 > trước khi dùng tính năng "Gán đề thi luyện tập vào bài học" — bản cập nhật này thêm bảng mới
 > `lesson_practice_links` vào DB Khóa học, đồng thời nới lỏng ràng buộc `session_id` và thêm cột
-> `kind` vào bảng `attempts` (DB Bài làm) để lưu kết quả luyện tập như một bài làm. Việc gọi lại hoàn
+> `kind` vào bảng `attempts` (DB Bài làm) để lưu kết quả luyện tập như một bài làm, và thêm cột
+> `show_answers` vào bảng `papers` (DB Đề thi) cho tính năng bật/tắt xem đáp án. Việc gọi lại hoàn
 > toàn an toàn, không xóa dữ liệu cũ.
 
 Sau khi deploy xong, mở trình duyệt và truy cập:
@@ -212,7 +213,22 @@ trang này rồi bấm lại nút in. Công thức LaTeX trong nội dung vẫn 
 
 ---
 
-## 11. Phát triển local (tùy chọn)
+## 11. Bật/tắt xem đáp án
+
+Mỗi **đề thi** (trang Đề thi → chọn đề) có công tắc **"Học sinh được xem đáp án sau khi nộp bài"**
+(mặc định bật). Áp dụng đồng thời cho cả hai nơi dùng đề đó:
+
+- **Luyện tập** (`/practice/[paperId]`, gán dưới bài học): tắt công tắc → sau khi nộp học sinh vẫn
+  thấy điểm số, nhưng không còn thấy câu nào đúng/sai hay đáp án đúng của từng câu.
+- **Ca thi chính thức** (`/exam/take`, qua mục "Thi"): trong lúc đang làm bài học sinh **không bao giờ**
+  thấy đáp án dù công tắc bật hay tắt. Đáp án chỉ có thể hiện ra **sau khi đã nộp bài xong**, và chỉ khi
+  công tắc đang bật.
+- Giáo viên/admin luôn thấy đầy đủ đáp án ở trang chấm bài (`/teacher/submissions/[id]`) bất kể công
+  tắc này, vì đó là màn hình chấm điểm chứ không phải màn hình học sinh xem lại bài.
+
+---
+
+## 12. Phát triển local (tùy chọn)
 
 ```bash
 npm install

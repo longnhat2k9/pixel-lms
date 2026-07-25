@@ -1,9 +1,10 @@
 import { DB } from "../../../../lib/db";
 import { requireRole } from "../../../../lib/auth";
 
-// Returns the attempt plus its questions. Students never see correct
-// answers (used for the exam-taking screen). Teachers/admins get the
-// correct_answer field too, so the grading screen can show full context.
+// Returns the attempt plus its questions. Teachers/admins always get the
+// correct_answer field (for grading). Students only get it once the attempt
+// is finished AND the paper's "show answers" setting is on — never while
+// still taking the exam.
 export default async function handler(req, res) {
   const { id } = req.query;
   const session = requireRole(req, res, ["admin", "teacher", "student"]);
@@ -18,11 +19,17 @@ export default async function handler(req, res) {
   }
 
   const isGrader = session.role === "admin" || session.role === "teacher";
+  let includeAnswers = isGrader;
+  if (!isGrader && attempt.status !== "in_progress") {
+    const { rows: paperRows } = await DB.questionbank(`SELECT show_answers FROM papers WHERE id = $1`, [attempt.paper_id]);
+    includeAnswers = paperRows[0]?.show_answers !== false;
+  }
+
   const { rows: questions } = await DB.questionbank(
-    `SELECT id, type, content, points, order_index, data${isGrader ? ", correct_answer" : ""}
+    `SELECT id, type, content, points, order_index, data${includeAnswers ? ", correct_answer" : ""}
      FROM questions WHERE paper_id = $1 ORDER BY order_index`,
     [attempt.paper_id]
   );
 
-  res.status(200).json({ attempt, questions });
+  res.status(200).json({ attempt, questions, showAnswers: includeAnswers });
 }

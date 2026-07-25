@@ -143,6 +143,7 @@ export default async function handler(req, res) {
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
     `);
+    await DB.questionbank(`ALTER TABLE papers ADD COLUMN IF NOT EXISTS show_answers BOOLEAN NOT NULL DEFAULT true;`);
     await DB.questionbank(`
       CREATE TABLE IF NOT EXISTS questions (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -71,6 +71,9 @@ export default function PracticePaper() {
               <div>
                 <div className="text-xs text-mute">Kết quả lần này</div>
                 <div className="text-2xl font-bold text-accent2">{result.score} / {result.maxScore}</div>
+                {result.showAnswers === false && (
+                  <div className="text-xs text-mute mt-1">Giáo viên đã tắt xem đáp án cho đề này.</div>
+                )}
               </div>
               <button className="pxl-btn-outline text-sm" onClick={retry}>↻ Làm lại</button>
             </div>
@@ -120,9 +123,9 @@ export default function PracticePaper() {
                   {q.type === "fill_blank" && (
                     <div>
                       <input className="pxl-input" value={answers[q.id] || ""} onChange={(e) => setAnswer(q.id, e.target.value)} />
-                      {b && (
+                      {b && b.correctAnswer !== null && (
                         <div className="text-xs text-accent2 mt-1">
-                          Đáp án đúng: <MarkdownRenderer content={String(b.correctAnswer ?? "")} inline />
+                          Đáp án đúng: <MarkdownRenderer content={String(b.correctAnswer)} inline />
                         </div>
                       )}
                     </div>

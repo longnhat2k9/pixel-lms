@@ -17,10 +17,11 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "PUT") {
-    const { title, description } = req.body || {};
+    const { title, description, show_answers } = req.body || {};
     const { rows } = await DB.questionbank(
-      `UPDATE papers SET title = COALESCE($1,title), description = COALESCE($2,description) WHERE id = $3 RETURNING *`,
-      [title, description, id]
+      `UPDATE papers SET title = COALESCE($1,title), description = COALESCE($2,description),
+       show_answers = COALESCE($3,show_answers) WHERE id = $4 RETURNING *`,
+      [title, description, show_answers, id]
     );
     return res.status(200).json({ paper: rows[0] });
   }

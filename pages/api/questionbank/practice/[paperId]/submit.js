@@ -18,8 +18,9 @@ export default async function handler(req, res) {
   }
 
   const { answers } = req.body || {};
-  const { rows: paperRows } = await DB.questionbank(`SELECT title FROM papers WHERE id = $1`, [paperId]);
+  const { rows: paperRows } = await DB.questionbank(`SELECT title, show_answers FROM papers WHERE id = $1`, [paperId]);
   const paperTitle = paperRows[0]?.title || "Luyện tập";
+  const showAnswers = session.role !== "student" || paperRows[0]?.show_answers !== false;
 
   const { rows: questions } = await DB.questionbank(
     `SELECT id, type, points, correct_answer FROM questions WHERE paper_id = $1 ORDER BY order_index`,
@@ -39,6 +40,9 @@ export default async function handler(req, res) {
       isCorrect = given !== undefined && norm(given) === norm(q.correct_answer?.value);
     }
     if (isCorrect) score += Number(q.points);
+    if (!showAnswers) {
+      return { questionId: q.id, isCorrect: null, correctAnswer: null, points: Number(q.points) };
+    }
     return {
       questionId: q.id,
       isCorrect,
@@ -59,5 +63,5 @@ export default async function handler(req, res) {
     );
   }
 
-  res.status(200).json({ score, maxScore, breakdown });
+  res.status(200).json({ score, maxScore, showAnswers, breakdown });
 }
