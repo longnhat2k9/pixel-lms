@@ -91,7 +91,8 @@ Endpoint này sẽ tạo toàn bộ bảng cần thiết ở cả 6 database (an
 - **Tên đăng nhập:** `admin`
 - **Mật khẩu:** `admin123`
 
-⚠️ **Đổi mật khẩu tài khoản admin này ngay sau lần đăng nhập đầu tiên** (vào mục Tài khoản → Đổi mật khẩu).
+⚠️ **Đổi mật khẩu tài khoản admin này ngay sau lần đăng nhập đầu tiên** — vào mục Tài khoản → Đổi mật khẩu
+(`/admin/accounts`), hoặc đơn giản hơn: bấm dòng "Welcome, admin" ở sidebar → trang `/account`.
 
 Nếu response trả về `"ok": false`, đọc phần `results` trong JSON để biết chính xác DB nào bị lỗi kết nối
 (thường là do gõ sai/thiếu biến môi trường `DATABASE_URL_*`).
@@ -182,7 +183,28 @@ trang này rồi bấm lại nút in. Công thức LaTeX trong nội dung vẫn 
 
 ---
 
-## 10. Phát triển local (tùy chọn)
+## 10. Giao diện điều hướng & hồ sơ cá nhân
+
+> Bản cập nhật này thêm cột `email` và `phone` vào bảng `accounts` — nếu bạn đã deploy trước đó, **gọi
+> lại `/api/setup` một lần nữa** (an toàn, không mất dữ liệu).
+
+- **Dòng "Welcome, {tên đăng nhập}"** nằm ngay trên nút Đăng xuất (sidebar trên desktop, trong menu ☰
+  trên mobile). Di chuột vào đó hiện tooltip với họ tên, tên đăng nhập, email, số điện thoại. Bấm vào để
+  mở trang **`/account`** — nơi tự sửa họ tên, email, số điện thoại, và đổi mật khẩu (yêu cầu nhập đúng
+  mật khẩu hiện tại). Không thể tự đổi tên đăng nhập ở đây.
+- **Điều hướng trên điện thoại** chuyển thành thanh ngang phía trên (logo + nút Menu ☰) thay vì sidebar
+  bên cạnh, bấm Menu để xổ ra danh sách trang + dòng Welcome + nút đăng xuất.
+- **Đã bỏ nút "Quay lại trang chủ"** khỏi khu vực điều hướng sau đăng nhập. Thay vào đó, trang **Tổng
+  quan** (`/admin`, `/teacher`, `/student` — trang đầu tiên sau khi đăng nhập) hiển thị: 4 bài viết mới
+  nhất, 3 khóa học tham gia gần đây nhất (đúng theo quyền của từng vai trò — admin thấy khóa học mới tạo
+  gần đây, giáo viên/học sinh thấy khóa học được cấp quyền gần đây), và 3 bài làm gần đây nhất mà người
+  đó có quyền xem (admin/giáo viên thấy toàn hệ thống, học sinh chỉ thấy bài của mình).
+- Trang admin trước đây nằm ở `/admin` (quản lý tài khoản) nay đã chuyển sang **`/admin/accounts`**;
+  `/admin` giờ là trang Tổng quan, đồng bộ với `/teacher` và `/student`.
+
+---
+
+## 11. Phát triển local (tùy chọn)
 
 ```bash
 npm install

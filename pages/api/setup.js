@@ -29,6 +29,8 @@ export default async function handler(req, res) {
         END IF;
       END $$;
     `);
+    await DB.accounts(`ALTER TABLE accounts ADD COLUMN IF NOT EXISTS email TEXT;`);
+    await DB.accounts(`ALTER TABLE accounts ADD COLUMN IF NOT EXISTS phone TEXT;`);
     results.accounts = "ok (seeded admin/admin123 if empty)";
   } catch (e) {
     results.accounts = `ERROR: ${e.message}`;

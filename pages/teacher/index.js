@@ -1,13 +1,13 @@
 import Layout from "../../components/Layout";
+import Overview from "../../components/Overview";
 import { useUser } from "../../lib/useUser";
 
-export default function TeacherHome() {
+export default function TeacherOverview() {
   const user = useUser(["teacher"]);
   if (!user) return null;
   return (
     <Layout user={user}>
-      <h1 className="text-2xl font-bold mb-1">Chào, {user.fullName}</h1>
-      <p className="text-mute text-sm">Dùng menu bên trái để quản lý khóa học, đề thi, ca thi, bài làm và bài viết.</p>
+      <Overview user={user} />
     </Layout>
   );
 }
