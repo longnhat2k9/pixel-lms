@@ -162,7 +162,27 @@ pages/lessons/[id].js  Trang riêng cho từng bài học (đọc tập trung, g
 
 ---
 
-## 9. Phát triển local (tùy chọn)
+## 9. In ấn
+
+Các nơi có nút in đều mở một **cửa sổ/tab mới** chứa bản in đã định dạng gọn cho khổ giấy, rồi tự động
+gọi hộp thoại in của trình duyệt (`window.print()`). Nếu trình duyệt chặn popup, cho phép popup cho
+trang này rồi bấm lại nút in. Công thức LaTeX trong nội dung vẫn được render đúng khi in.
+
+- **In đề** (trang Đề thi): in toàn bộ đề dưới dạng phiếu làm bài — liệt kê hết các lựa chọn, **không**
+  lộ đáp án đúng, có chỗ trống để học sinh trả lời câu điền khuyết/tự luận.
+- **In đáp án** (trang Đề thi): in bảng đáp án gọn để giáo viên đối chiếu chấm nhanh, không in lại toàn
+  bộ đề.
+- **In các ca thi đã chọn** (trang Thi): tick chọn ca thi cần in → in danh sách mã ca thi kèm tên, thời
+  gian làm bài, trạng thái — chỉ in những ca thi đã được chọn, không in toàn bộ danh sách.
+- **In tài khoản đã chọn** (trang Tài khoản): vì mật khẩu được lưu dạng plaintext trong DB nhưng **không**
+  được API trả về khi tải danh sách (để tránh lộ hàng loạt), nút in chỉ khả dụng với những tài khoản
+  **vừa được tạo hoặc vừa đổi mật khẩu trong phiên làm việc hiện tại** (đánh dấu nhãn "Mới"). Tick chọn
+  tài khoản cần in rồi bấm in — tải lại trang sẽ mất danh sách này, đúng theo mục đích "in ngay sau khi
+  tạo/đổi mật khẩu" chứ không phải in lại mật khẩu cũ bất kỳ lúc nào.
+
+---
+
+## 10. Phát triển local (tùy chọn)
 
 ```bash
 npm install

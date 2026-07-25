@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Layout from "../../../components/Layout";
 import MarkdownRenderer from "../../../components/MarkdownRenderer";
+import { printReact } from "../../../lib/print";
+import { ExamPaperDoc, AnswerKeyDoc } from "../../../components/printDocs";
 import { useUser, apiFetch } from "../../../lib/useUser";
 
 const TYPE_LABEL = {
@@ -74,7 +76,25 @@ export default function PaperDetail() {
 
   return (
     <Layout user={user}>
-      <h1 className="text-2xl font-bold mb-1">{paper.title}</h1>
+      <div className="flex items-start justify-between gap-4 mb-1">
+        <h1 className="text-2xl font-bold">{paper.title}</h1>
+        <div className="flex gap-2 shrink-0">
+          <button
+            className="pxl-btn-outline text-xs px-3 py-1.5"
+            disabled={questions.length === 0}
+            onClick={() => printReact(`De thi - ${paper.title}`, <ExamPaperDoc paper={paper} questions={questions} />)}
+          >
+            🖨️ In đề
+          </button>
+          <button
+            className="pxl-btn-outline text-xs px-3 py-1.5"
+            disabled={questions.length === 0}
+            onClick={() => printReact(`Dap an - ${paper.title}`, <AnswerKeyDoc paper={paper} questions={questions} />)}
+          >
+            🖨️ In đáp án
+          </button>
+        </div>
+      </div>
       <p className="text-mute mb-6 text-sm">{paper.description}</p>
       {error && <div className="mb-4 text-sm text-danger">{error}</div>}
 

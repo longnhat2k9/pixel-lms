@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import Layout from "../../components/Layout";
+import { printReact } from "../../lib/print";
+import { AccountCredentialsDoc } from "../../components/printDocs";
 import { useUser, apiFetch } from "../../lib/useUser";
 
 const ROLE_LABEL = { admin: "Admin", teacher: "Giáo viên", student: "Học sinh" };
@@ -19,6 +21,12 @@ export default function AdminAccounts() {
   const [resetTarget, setResetTarget] = useState(null);
   const [resetPw, setResetPw] = useState("");
 
+  // Tài khoản vừa được tạo hoặc đổi mật khẩu trong phiên làm việc này — chỉ
+  // những tài khoản này mới có mật khẩu dạng plaintext để in ra (mật khẩu
+  // không được API trả lại khi tải danh sách, vì lý do bảo mật).
+  const [recentCreds, setRecentCreds] = useState({}); // { [id]: {id, username, password, fullName, role} }
+  const [printSelected, setPrintSelected] = useState(new Set());
+
   async function load() {
     try {
       const d = await apiFetch("/api/admin/accounts");
@@ -30,12 +38,21 @@ export default function AdminAccounts() {
 
   useEffect(() => { if (user) load(); }, [user]);
 
+  function rememberCreds(entry) {
+    setRecentCreds((prev) => ({ ...prev, [entry.id]: entry }));
+    setPrintSelected((prev) => new Set(prev).add(entry.id));
+  }
+
   async function createAccount(e) {
     e.preventDefault();
     setError("");
     try {
-      await apiFetch("/api/admin/accounts", { method: "POST", body: JSON.stringify(form) });
-      setForm({ username: "", password: "", fullName: "", role: user.role === "teacher" ? "student" : "student" });
+      const d = await apiFetch("/api/admin/accounts", { method: "POST", body: JSON.stringify(form) });
+      rememberCreds({
+        id: d.account.id, username: d.account.username, password: form.password,
+        fullName: d.account.full_name, role: d.account.role,
+      });
+      setForm({ username: "", password: "", fullName: "", role: "student" });
       load();
     } catch (e) { setError(e.message); }
   }
@@ -45,6 +62,10 @@ export default function AdminAccounts() {
       await apiFetch(`/api/admin/accounts/${resetTarget.id}`, {
         method: "PATCH",
         body: JSON.stringify({ action: "reset_password", password: resetPw }),
+      });
+      rememberCreds({
+        id: resetTarget.id, username: resetTarget.username, password: resetPw,
+        fullName: resetTarget.full_name, role: resetTarget.role,
       });
       setResetTarget(null);
       setResetPw("");
@@ -81,17 +102,45 @@ export default function AdminAccounts() {
     } catch (e) { setError(e.message); }
   }
 
+  function togglePrintSelect(id) {
+    setPrintSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function printSelectedAccounts() {
+    const chosen = Object.values(recentCreds).filter((c) => printSelected.has(c.id));
+    if (chosen.length === 0) return;
+    printReact("Danh sach tai khoan", <AccountCredentialsDoc accounts={chosen} />);
+  }
+
   if (!user) return null;
+
+  const printableCount = Object.keys(recentCreds).length;
 
   return (
     <Layout user={user}>
-      <h1 className="text-2xl font-bold mb-1">
-        {user.role === "teacher" ? "Tài khoản học sinh" : "Quản lý tài khoản"}
-      </h1>
+      <div className="flex items-start justify-between gap-4 mb-1">
+        <h1 className="text-2xl font-bold">
+          {user.role === "teacher" ? "Tài khoản học sinh" : "Quản lý tài khoản"}
+        </h1>
+        {printableCount > 0 && (
+          <button
+            className="pxl-btn-outline text-xs px-3 py-1.5 shrink-0"
+            disabled={printSelected.size === 0}
+            onClick={printSelectedAccounts}
+          >
+            🖨️ In tài khoản đã chọn ({printSelected.size})
+          </button>
+        )}
+      </div>
       <p className="text-mute mb-6 text-sm">
         {user.role === "admin"
           ? "Tạo, xóa và đổi mật khẩu cho tài khoản admin, giáo viên, học sinh."
           : "Tạo, xóa và đổi mật khẩu cho tài khoản học sinh."}
+        {" "}Chỉ có thể in mật khẩu của tài khoản vừa tạo hoặc vừa đổi mật khẩu trong phiên làm việc này.
       </p>
 
       {error && <div className="mb-4 text-sm text-danger">{error}</div>}
@@ -132,6 +181,7 @@ export default function AdminAccounts() {
         <table className="w-full text-sm">
           <thead className="bg-panel2 text-mute text-left">
             <tr>
+              <th className="p-3 w-8"></th>
               <th className="p-3">Họ tên</th>
               <th className="p-3">Tên đăng nhập</th>
               <th className="p-3">Vai trò</th>
@@ -141,47 +191,64 @@ export default function AdminAccounts() {
             </tr>
           </thead>
           <tbody>
-            {accounts.map((acc) => (
-              <tr key={acc.id} className="border-t border-line">
-                <td className="p-3">{acc.full_name}</td>
-                <td className="p-3 font-mono text-xs">{acc.username}</td>
-                <td className="p-3">
-                  <span className={`pxl-badge ${ROLE_COLOR[acc.role]}`}>{ROLE_LABEL[acc.role]}</span>
-                </td>
-                <td className="p-3 text-mute text-xs">
-                  {acc.last_login_at ? new Date(acc.last_login_at).toLocaleString("vi-VN") : "Chưa đăng nhập"}
-                </td>
-                <td className="p-3 text-xs">
-                  {acc.delete_requested_at ? (
-                    <span className="text-warn">
-                      Chờ xóa · còn {daysLeft(acc.delete_requested_at)} ngày
-                    </span>
-                  ) : (
-                    <span className="text-mute">Bình thường</span>
-                  )}
-                </td>
-                <td className="p-3">
-                  <div className="flex gap-2 justify-end">
-                    <button className="pxl-btn-outline text-xs px-2 py-1"
-                      onClick={() => setResetTarget(acc)}>Đổi mật khẩu</button>
-                    {acc.role === "admin" ? (
-                      acc.delete_requested_at ? (
-                        <button className="pxl-btn-outline text-xs px-2 py-1"
-                          onClick={() => cancelDelete(acc)}>Hủy yêu cầu xóa</button>
-                      ) : (
-                        acc.id !== user.id && (
-                          <button className="pxl-btn-danger text-xs px-2 py-1"
-                            onClick={() => requestDeleteAdmin(acc)}>Yêu cầu xóa</button>
-                        )
-                      )
-                    ) : (
-                      <button className="pxl-btn-danger text-xs px-2 py-1"
-                        onClick={() => deleteDirect(acc)}>Xóa</button>
+            {accounts.map((acc) => {
+              const printable = !!recentCreds[acc.id];
+              return (
+                <tr key={acc.id} className="border-t border-line">
+                  <td className="p-3">
+                    {printable && (
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4"
+                        checked={printSelected.has(acc.id)}
+                        onChange={() => togglePrintSelect(acc.id)}
+                        title="Chọn để in"
+                      />
                     )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="p-3">
+                    {acc.full_name}
+                    {printable && <span className="pxl-badge bg-accent2/20 text-accent2 ml-2">Mới</span>}
+                  </td>
+                  <td className="p-3 font-mono text-xs">{acc.username}</td>
+                  <td className="p-3">
+                    <span className={`pxl-badge ${ROLE_COLOR[acc.role]}`}>{ROLE_LABEL[acc.role]}</span>
+                  </td>
+                  <td className="p-3 text-mute text-xs">
+                    {acc.last_login_at ? new Date(acc.last_login_at).toLocaleString("vi-VN") : "Chưa đăng nhập"}
+                  </td>
+                  <td className="p-3 text-xs">
+                    {acc.delete_requested_at ? (
+                      <span className="text-warn">
+                        Chờ xóa · còn {daysLeft(acc.delete_requested_at)} ngày
+                      </span>
+                    ) : (
+                      <span className="text-mute">Bình thường</span>
+                    )}
+                  </td>
+                  <td className="p-3">
+                    <div className="flex gap-2 justify-end">
+                      <button className="pxl-btn-outline text-xs px-2 py-1"
+                        onClick={() => setResetTarget(acc)}>Đổi mật khẩu</button>
+                      {acc.role === "admin" ? (
+                        acc.delete_requested_at ? (
+                          <button className="pxl-btn-outline text-xs px-2 py-1"
+                            onClick={() => cancelDelete(acc)}>Hủy yêu cầu xóa</button>
+                        ) : (
+                          acc.id !== user.id && (
+                            <button className="pxl-btn-danger text-xs px-2 py-1"
+                              onClick={() => requestDeleteAdmin(acc)}>Yêu cầu xóa</button>
+                          )
+                        )
+                      ) : (
+                        <button className="pxl-btn-danger text-xs px-2 py-1"
+                          onClick={() => deleteDirect(acc)}>Xóa</button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

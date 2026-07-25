@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import Layout from "../../components/Layout";
+import { printReact } from "../../lib/print";
+import { SessionListDoc } from "../../components/printDocs";
 import { useUser, apiFetch } from "../../lib/useUser";
 
 const STATUS_LABEL = { scheduled: "Đã lên lịch", active: "Đang diễn ra", ended: "Đã đóng" };
@@ -15,6 +17,7 @@ export default function ExamsPage() {
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState(null);
   const [detail, setDetail] = useState(null);
+  const [selected, setSelected] = useState(new Set());
 
   async function load() {
     try {
@@ -58,12 +61,33 @@ export default function ExamsPage() {
     } catch (e) { setError(e.message); }
   }
 
+  function toggleSelect(id) {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelected(next);
+  }
+
+  function printSelected() {
+    const chosen = sessions.filter((s) => selected.has(s.id));
+    if (chosen.length === 0) return;
+    printReact("Danh sach ca thi", <SessionListDoc sessions={chosen} />);
+  }
+
   if (!user) return null;
 
   return (
     <Layout user={user}>
-      <h1 className="text-2xl font-bold mb-1">Thi</h1>
-      <p className="text-mute mb-6 text-sm">Tạo ca thi từ đề thi có sẵn. Học sinh chỉ cần nhập mã ca thi.</p>
+      <div className="flex items-start justify-between gap-4 mb-1">
+        <h1 className="text-2xl font-bold">Thi</h1>
+        <button
+          className="pxl-btn-outline text-xs px-3 py-1.5 shrink-0"
+          disabled={selected.size === 0}
+          onClick={printSelected}
+        >
+          🖨️ In các ca thi đã chọn ({selected.size})
+        </button>
+      </div>
+      <p className="text-mute mb-6 text-sm">Tạo ca thi từ đề thi có sẵn. Học sinh chỉ cần nhập mã ca thi. Tick chọn ca thi để in.</p>
       {error && <div className="mb-4 text-sm text-danger">{error}</div>}
 
       <form onSubmit={create} className="pxl-card p-5 mb-8 grid md:grid-cols-4 gap-3 items-end">
@@ -90,10 +114,18 @@ export default function ExamsPage() {
         {sessions.map((s) => (
           <div key={s.id} className="pxl-card p-5">
             <div className="flex items-center justify-between">
-              <div>
-                <div className="font-semibold">{s.title}</div>
-                <div className="text-xs text-mute mt-1">
-                  Mã ca thi: <span className="font-mono text-accent">{s.session_code}</span> · {s.time_limit_minutes} phút
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4"
+                  checked={selected.has(s.id)}
+                  onChange={() => toggleSelect(s.id)}
+                />
+                <div>
+                  <div className="font-semibold">{s.title}</div>
+                  <div className="text-xs text-mute mt-1">
+                    Mã ca thi: <span className="font-mono text-accent">{s.session_code}</span> · {s.time_limit_minutes} phút
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
