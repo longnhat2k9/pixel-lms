@@ -19,14 +19,23 @@ export default async function handler(req, res) {
   if (!examSession) return res.status(404).json({ error: "Mã ca thi không tồn tại." });
 
   const now = new Date();
-  if (examSession.start_time && now < new Date(examSession.start_time)) {
-    return res.status(400).json({ error: "Ca thi chưa bắt đầu." });
+  if (examSession.status === "ended") {
+    return res.status(400).json({ error: "Ca thi đã đóng." });
   }
   if (examSession.end_time && now > new Date(examSession.end_time)) {
     return res.status(400).json({ error: "Ca thi đã kết thúc." });
   }
-  if (examSession.status === "ended") {
-    return res.status(400).json({ error: "Ca thi đã đóng." });
+  // Session hasn't been opened by the teacher yet (or its start time hasn't
+  // arrived) — tell the student to wait instead of erroring. No attempt is
+  // created yet, so the timer only starts once the session actually opens.
+  const notOpenYet = examSession.status === "scheduled" ||
+    (examSession.start_time && now < new Date(examSession.start_time));
+  if (notOpenYet) {
+    return res.status(200).json({
+      waiting: true,
+      sessionCode: examSession.session_code,
+      title: examSession.title,
+    });
   }
 
   const { rows: existing } = await DB.submissions(

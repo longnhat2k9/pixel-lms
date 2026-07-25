@@ -73,7 +73,11 @@ export default function LessonPage() {
     setEntering(session.id);
     try {
       const d = await apiFetch("/api/exams/enter", { method: "POST", body: JSON.stringify({ code: session.session_code }) });
-      router.push(`/exam/take/${d.attemptId}`);
+      if (d.waiting) {
+        router.push(`/exam/waiting/${d.sessionCode}`);
+      } else {
+        router.push(`/exam/take/${d.attemptId}`);
+      }
     } catch (e) {
       setError(e.message);
       setEntering(null);
@@ -170,10 +174,16 @@ export default function LessonPage() {
                     {user.role === "student" ? (
                       <button
                         className="pxl-btn text-xs px-3 py-1.5"
-                        disabled={s.status !== "active" || entering === s.id}
+                        disabled={s.status === "ended" || entering === s.id}
                         onClick={() => startPractice(s)}
                       >
-                        {entering === s.id ? "Đang vào..." : s.status === "active" ? "Bắt đầu làm bài" : "Chưa mở"}
+                        {entering === s.id
+                          ? "Đang vào..."
+                          : s.status === "active"
+                          ? "Bắt đầu làm bài"
+                          : s.status === "scheduled"
+                          ? "Chờ mở ca thi"
+                          : "Đã đóng"}
                       </button>
                     ) : (
                       <span className="text-xs text-mute font-mono">{s.session_code}</span>

@@ -16,7 +16,11 @@ export default function StudentExamEntry() {
     setLoading(true);
     try {
       const d = await apiFetch("/api/exams/enter", { method: "POST", body: JSON.stringify({ code }) });
-      router.push(`/exam/take/${d.attemptId}`);
+      if (d.waiting) {
+        router.push(`/exam/waiting/${d.sessionCode}`);
+      } else {
+        router.push(`/exam/take/${d.attemptId}`);
+      }
     } catch (e) {
       setError(e.message);
     } finally {
