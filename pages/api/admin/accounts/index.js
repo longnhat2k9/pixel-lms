@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     if (!session) return;
     const roleFilter = session.role === "teacher" ? "AND role = 'student'" : "";
     const { rows } = await DB.accounts(
-      `SELECT id, username, full_name, role, created_at, last_login_at,
+      `SELECT id, username, full_name, role, email, phone, created_at, last_login_at,
               delete_requested_at, delete_requested_by
        FROM accounts WHERE true ${roleFilter} ORDER BY created_at DESC`
     );

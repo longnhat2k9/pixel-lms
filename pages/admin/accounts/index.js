@@ -184,6 +184,8 @@ export default function AdminAccounts() {
               <th className="p-3 w-8"></th>
               <th className="p-3">Họ tên</th>
               <th className="p-3">Tên đăng nhập</th>
+              <th className="p-3">Email</th>
+              <th className="p-3">Số điện thoại</th>
               <th className="p-3">Vai trò</th>
               <th className="p-3">Đăng nhập gần nhất</th>
               <th className="p-3">Trạng thái</th>
@@ -211,6 +213,8 @@ export default function AdminAccounts() {
                     {printable && <span className="pxl-badge bg-accent2/20 text-accent2 ml-2">Mới</span>}
                   </td>
                   <td className="p-3 font-mono text-xs">{acc.username}</td>
+                  <td className="p-3 text-xs text-gray-300">{acc.email || "-"}</td>
+                  <td className="p-3 text-xs text-gray-300">{acc.phone || "-"}</td>
                   <td className="p-3">
                     <span className={`pxl-badge ${ROLE_COLOR[acc.role]}`}>{ROLE_LABEL[acc.role]}</span>
                   </td>
