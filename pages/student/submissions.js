@@ -38,6 +38,7 @@ export default function StudentSubmissions() {
           <thead className="bg-panel2 text-mute text-left">
             <tr>
               <th className="p-3">Đề thi</th>
+              <th className="p-3">Loại</th>
               <th className="p-3">Bắt đầu</th>
               <th className="p-3">Trạng thái</th>
               <th className="p-3">Điểm</th>
@@ -48,6 +49,13 @@ export default function StudentSubmissions() {
             {attempts.map((a) => (
               <tr key={a.id} className="border-t border-line">
                 <td className="p-3">{a.exam_title_snapshot}</td>
+                <td className="p-3">
+                  {a.kind === "practice" ? (
+                    <span className="pxl-badge bg-accent/20 text-accent">Luyện tập</span>
+                  ) : (
+                    <span className="pxl-badge bg-panel2 text-gray-300">Ca thi</span>
+                  )}
+                </td>
                 <td className="p-3 text-xs text-mute">{new Date(a.started_at).toLocaleString("vi-VN")}</td>
                 <td className="p-3"><span className={`pxl-badge ${STATUS_COLOR[a.status]}`}>{STATUS_LABEL[a.status]}</span></td>
                 <td className="p-3">{a.final_score ?? "—"}</td>
@@ -61,7 +69,7 @@ export default function StudentSubmissions() {
               </tr>
             ))}
             {attempts.length === 0 && (
-              <tr><td colSpan={5} className="p-6 text-center text-mute text-sm">Chưa có bài làm nào.</td></tr>
+              <tr><td colSpan={6} className="p-6 text-center text-mute text-sm">Chưa có bài làm nào.</td></tr>
             )}
           </tbody>
         </table>

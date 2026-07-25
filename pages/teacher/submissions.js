@@ -46,6 +46,9 @@ export default function SubmissionsPage() {
               <Link href={`/teacher/submissions/${a.id}`} className="font-semibold hover:text-accent">
                 {a.exam_title_snapshot}
               </Link>
+              {a.kind === "practice" && (
+                <span className="pxl-badge bg-accent/20 text-accent ml-2">Luyện tập</span>
+              )}
               <div className="text-xs text-mute mt-1">
                 {a.student_name_snapshot} · Bắt đầu {new Date(a.started_at).toLocaleString("vi-VN")}
               </div>

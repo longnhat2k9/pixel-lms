@@ -125,6 +125,8 @@ export default async function handler(req, res) {
         ended_reason TEXT
       );
     `);
+    await DB.submissions(`ALTER TABLE attempts ALTER COLUMN session_id DROP NOT NULL;`);
+    await DB.submissions(`ALTER TABLE attempts ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'exam';`);
     results.submissions = "ok";
   } catch (e) {
     results.submissions = `ERROR: ${e.message}`;

@@ -107,7 +107,10 @@ export default function Overview({ user }) {
             {attempts.map((a) => (
               <div key={a.id} className="pxl-card p-4 flex items-center justify-between gap-4">
                 <div className="min-w-0">
-                  <div className="font-medium text-sm truncate">{a.exam_title_snapshot}</div>
+                  <div className="font-medium text-sm truncate">
+                    {a.exam_title_snapshot}
+                    {a.kind === "practice" && <span className="pxl-badge bg-accent/20 text-accent ml-2">Luyện tập</span>}
+                  </div>
                   <div className="text-xs text-mute mt-0.5">
                     {user.role !== "student" && `${a.student_name_snapshot} · `}
                     {new Date(a.started_at).toLocaleString("vi-VN")}

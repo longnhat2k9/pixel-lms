@@ -129,7 +129,7 @@ export default function LessonPage() {
 
             {meta.canEdit && (
               <div className="text-xs text-mute mb-3">
-                Học sinh có thể bấm làm bài trực tiếp, không giới hạn số lần làm lại (khác với ca thi ở mục "Thi").
+                Học sinh có thể bấm làm bài trực tiếp, không giới hạn số lần làm lại (khác với ca thi ở mục "Thi"). Mỗi lần nộp đều được ghi lại trong mục Bài làm.
               </div>
             )}
 

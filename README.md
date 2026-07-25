@@ -77,7 +77,9 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 > Nếu bạn đã deploy trước đó và tải bản cập nhật này về, hãy **gọi lại `/api/setup` một lần nữa**
 > trước khi dùng tính năng "Gán đề thi luyện tập vào bài học" — bản cập nhật này thêm bảng mới
-> `lesson_practice_links` vào DB Khóa học. Việc gọi lại hoàn toàn an toàn, không xóa dữ liệu cũ.
+> `lesson_practice_links` vào DB Khóa học, đồng thời nới lỏng ràng buộc `session_id` và thêm cột
+> `kind` vào bảng `attempts` (DB Bài làm) để lưu kết quả luyện tập như một bài làm. Việc gọi lại hoàn
+> toàn an toàn, không xóa dữ liệu cũ.
 
 Sau khi deploy xong, mở trình duyệt và truy cập:
 
@@ -159,7 +161,9 @@ pages/exam/take/   Màn hình làm bài thi có tính giờ (ca thi từ mục "
 pages/exam/waiting/[code].js  Phòng chờ ca thi: học sinh đứng yên ở đây, tự động vào thi ngay khi
                         giáo viên mở ca thi (poll trạng thái mỗi 3 giây)
 pages/practice/[paperId].js  Luyện tập không giới hạn số lần: chấm điểm ngay, không tính giờ, không
-                        cần ca thi/mã — dùng cho đề thi được gán dưới bài học
+                        cần ca thi/mã — dùng cho đề thi được gán dưới bài học. Mỗi lần nộp vẫn được
+                        lưu lại thành một dòng trong mục Bài làm (đánh dấu "Luyện tập") để giáo viên/
+                        admin xem và chấm tay các câu tự luận/nối câu nếu cần.
 pages/lessons/[id].js  Trang riêng cho từng bài học (đọc tập trung, giáo viên/admin sửa nội dung
                         và gán đề thi luyện tập ngay bên dưới bài học; học sinh bấm "Làm bài" để
                         luyện tập ngay, làm lại bao nhiêu lần cũng được)

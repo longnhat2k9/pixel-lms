@@ -64,7 +64,7 @@ export default function PracticePaper() {
             <h1 className="text-2xl font-bold">{paper.title}</h1>
             <span className="pxl-badge bg-panel2 text-gray-300 shrink-0">Luyện tập · không giới hạn số lần</span>
           </div>
-          <p className="text-mute text-sm mb-6">Làm xong bấm "Nộp bài" để xem điểm ngay. Có thể làm lại bao nhiêu lần tùy thích.</p>
+          <p className="text-mute text-sm mb-6">Làm xong bấm "Nộp bài" để xem điểm ngay. Có thể làm lại bao nhiêu lần tùy thích — mỗi lần nộp đều được lưu vào mục Bài làm.</p>
 
           {result && (
             <div className="pxl-card p-5 mb-6 flex items-center justify-between">

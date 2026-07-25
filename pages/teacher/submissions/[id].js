@@ -97,7 +97,10 @@ export default function SubmissionDetail() {
       <div className="max-w-3xl">
         <div className="flex items-start justify-between gap-4 mb-1">
           <h1 className="text-2xl font-bold">{attempt.exam_title_snapshot}</h1>
-          <span className={`pxl-badge shrink-0 ${STATUS_COLOR[attempt.status]}`}>{STATUS_LABEL[attempt.status]}</span>
+          <div className="flex gap-2 shrink-0">
+            {attempt.kind === "practice" && <span className="pxl-badge bg-accent/20 text-accent">Luyện tập</span>}
+            <span className={`pxl-badge ${STATUS_COLOR[attempt.status]}`}>{STATUS_LABEL[attempt.status]}</span>
+          </div>
         </div>
         <div className="text-sm text-mute mb-6">
           {attempt.student_name_snapshot} · Bắt đầu {new Date(attempt.started_at).toLocaleString("vi-VN")}

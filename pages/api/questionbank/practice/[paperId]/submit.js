@@ -3,8 +3,10 @@ import { requireRole } from "../../../../../lib/auth";
 import { canPractice } from "../../../../../lib/practiceAccess";
 
 // Grades a practice attempt on the spot and returns the breakdown + correct
-// answers immediately. Nothing is persisted — practice can be repeated an
-// unlimited number of times with no record kept, unlike a real exam attempt.
+// answers immediately. Students can repeat this an unlimited number of
+// times — each submission is still recorded as its own row in the Bài làm
+// (attempts) module (kind = 'practice') so teachers/admins can see practice
+// history too, it's just never time-limited or blocked from retrying.
 export default async function handler(req, res) {
   const session = requireRole(req, res, ["admin", "teacher", "student"]);
   if (!session) return;
@@ -16,6 +18,9 @@ export default async function handler(req, res) {
   }
 
   const { answers } = req.body || {};
+  const { rows: paperRows } = await DB.questionbank(`SELECT title FROM papers WHERE id = $1`, [paperId]);
+  const paperTitle = paperRows[0]?.title || "Luyện tập";
+
   const { rows: questions } = await DB.questionbank(
     `SELECT id, type, points, correct_answer FROM questions WHERE paper_id = $1 ORDER BY order_index`,
     [paperId]
@@ -41,6 +46,18 @@ export default async function handler(req, res) {
       points: Number(q.points),
     };
   });
+
+  // Only students' own practice runs are logged as a Bài làm — a
+  // teacher/admin clicking "Xem thử" isn't a student result to grade.
+  if (session.role === "student") {
+    await DB.submissions(
+      `INSERT INTO attempts
+        (session_id, session_code, paper_id, exam_title_snapshot, student_id, student_name_snapshot,
+         time_limit_minutes, status, answers, auto_score, final_score, submitted_at, kind)
+       VALUES (NULL, 'PRACTICE', $1, $2, $3, $4, 0, 'submitted', $5, $6, $6, now(), 'practice')`,
+      [paperId, paperTitle, session.id, session.fullName, JSON.stringify(answers || {}), score]
+    );
+  }
 
   res.status(200).json({ score, maxScore, breakdown });
 }
