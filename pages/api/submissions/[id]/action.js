@@ -42,14 +42,36 @@ export default async function handler(req, res) {
   }
 
   if (action === "grade") {
-    // body: { overrides: { [questionId]: points } } manual grading for
-    // essay/matching questions, merged on top of the auto-graded score.
+    // body: { overrides: { [questionId]: points } } — teacher-set final point
+    // value for ANY question (not just essay/matching). Any question not
+    // present in overrides falls back to its auto-graded value.
     const { overrides } = req.body || {};
     if (!overrides || typeof overrides !== "object") {
       return res.status(400).json({ error: "Thiếu điểm chấm tay." });
     }
-    const manualTotal = Object.values(overrides).reduce((sum, v) => sum + Number(v || 0), 0);
-    const finalScore = Number(attempt.auto_score || 0) + manualTotal;
+
+    const { rows: questions } = await DB.questionbank(
+      `SELECT id, type, points, correct_answer FROM questions WHERE paper_id = $1`,
+      [attempt.paper_id]
+    );
+    const answers = attempt.answers || {};
+
+    let finalScore = 0;
+    for (const q of questions) {
+      if (Object.prototype.hasOwnProperty.call(overrides, q.id)) {
+        finalScore += Number(overrides[q.id] || 0);
+        continue;
+      }
+      const given = answers[q.id];
+      if (q.type === "choice2" || q.type === "choice4") {
+        if (given !== undefined && String(given) === String(q.correct_answer?.value)) finalScore += Number(q.points);
+      } else if (q.type === "fill_blank") {
+        const norm = (s) => String(s || "").trim().toLowerCase();
+        if (given !== undefined && norm(given) === norm(q.correct_answer?.value)) finalScore += Number(q.points);
+      }
+      // essay/matching with no override contribute 0 until graded
+    }
+
     const { rows: updated } = await DB.submissions(
       `UPDATE attempts SET manual_overrides = $1, final_score = $2 WHERE id = $3 RETURNING *`,
       [JSON.stringify(overrides), finalScore, id]

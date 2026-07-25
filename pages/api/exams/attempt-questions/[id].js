@@ -1,8 +1,9 @@
 import { DB } from "../../../../lib/db";
 import { requireRole } from "../../../../lib/auth";
 
-// Returns the attempt plus its questions with correct answers stripped out,
-// for rendering the exam-taking screen.
+// Returns the attempt plus its questions. Students never see correct
+// answers (used for the exam-taking screen). Teachers/admins get the
+// correct_answer field too, so the grading screen can show full context.
 export default async function handler(req, res) {
   const { id } = req.query;
   const session = requireRole(req, res, ["admin", "teacher", "student"]);
@@ -16,8 +17,10 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: "Không có quyền." });
   }
 
+  const isGrader = session.role === "admin" || session.role === "teacher";
   const { rows: questions } = await DB.questionbank(
-    `SELECT id, type, content, points, order_index, data FROM questions WHERE paper_id = $1 ORDER BY order_index`,
+    `SELECT id, type, content, points, order_index, data${isGrader ? ", correct_answer" : ""}
+     FROM questions WHERE paper_id = $1 ORDER BY order_index`,
     [attempt.paper_id]
   );
 
