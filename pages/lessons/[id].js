@@ -82,19 +82,33 @@ export default function LessonPage() {
       {!lesson ? (
         <div className="text-mute">Đang tải...</div>
       ) : (
-        <div className="max-w-2xl">
+        <div className={editing ? "max-w-5xl" : "max-w-2xl"}>
           <div className="text-xs text-mute mb-1">{meta.courseTitle} · {meta.chapterTitle}</div>
 
           {editing ? (
-            <div className="space-y-3 mb-8">
-              <input className="pxl-input text-xl font-bold" value={draft.title}
+            <div className="mb-8">
+              <input className="pxl-input text-xl font-bold mb-3" value={draft.title}
                 onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
-              <textarea className="pxl-input font-mono text-sm" rows={14} value={draft.content}
-                onChange={(e) => setDraft({ ...draft, content: e.target.value })} />
-              <div className="text-xs text-mute">
-                Hỗ trợ Markdown & LaTeX: chèn ảnh bằng <code>![mô tả](url)</code>, công thức bằng <code>$...$</code> hoặc <code>$$...$$</code>.
+              <div className="grid lg:grid-cols-2 gap-4">
+                <div>
+                  <textarea className="pxl-input font-mono text-sm" rows={16} value={draft.content}
+                    onChange={(e) => setDraft({ ...draft, content: e.target.value })} />
+                  <div className="text-xs text-mute mt-2">
+                    Hỗ trợ Markdown & LaTeX: chèn ảnh bằng <code>![mô tả](url)</code>, công thức bằng <code>$...$</code> hoặc <code>$$...$$</code>.
+                  </div>
+                </div>
+                <div className="lg:sticky lg:top-5 self-start">
+                  <div className="text-xs text-mute mb-2">Xem trước</div>
+                  <div className="pxl-card p-5">
+                    {draft.content ? (
+                      <MarkdownRenderer content={draft.content} className="text-gray-200" />
+                    ) : (
+                      <span className="text-mute italic text-sm">(chưa có nội dung)</span>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 mt-3">
                 <button className="pxl-btn" onClick={saveContent}>Lưu</button>
                 <button className="pxl-btn-outline" onClick={() => { setEditing(false); setDraft({ title: lesson.title, content: lesson.content }); }}>Hủy</button>
               </div>

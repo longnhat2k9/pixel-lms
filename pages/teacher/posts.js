@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Layout from "../../components/Layout";
+import MarkdownRenderer from "../../components/MarkdownRenderer";
 import { useUser, apiFetch } from "../../lib/useUser";
 
 function emptyForm() {
@@ -62,11 +63,27 @@ export default function PostsPage() {
           onChange={(e) => setForm({ ...form, title: e.target.value })} required />
         <input className="pxl-input" placeholder="Tóm tắt ngắn (tùy chọn)" value={form.excerpt}
           onChange={(e) => setForm({ ...form, excerpt: e.target.value })} />
-        <textarea className="pxl-input font-mono text-sm" rows={6} placeholder="Nội dung (hỗ trợ Markdown & LaTeX)" value={form.content}
-          onChange={(e) => setForm({ ...form, content: e.target.value })} required />
-        <div className="text-xs text-mute -mt-2">
-          Hỗ trợ Markdown & LaTeX: chèn ảnh bằng <code>![mô tả](url)</code>, công thức bằng <code>$...$</code> hoặc <code>$$...$$</code>.
+
+        <div className="grid lg:grid-cols-2 gap-4">
+          <div>
+            <textarea className="pxl-input font-mono text-sm" rows={10} placeholder="Nội dung (hỗ trợ Markdown & LaTeX)" value={form.content}
+              onChange={(e) => setForm({ ...form, content: e.target.value })} required />
+            <div className="text-xs text-mute mt-2">
+              Hỗ trợ Markdown & LaTeX: chèn ảnh bằng <code>![mô tả](url)</code>, công thức bằng <code>$...$</code> hoặc <code>$$...$$</code>.
+            </div>
+          </div>
+          <div className="lg:sticky lg:top-5 self-start">
+            <div className="text-xs text-mute mb-2">Xem trước</div>
+            <div className="pxl-card p-5 bg-panel2">
+              {form.content ? (
+                <MarkdownRenderer content={form.content} className="text-gray-200" />
+              ) : (
+                <span className="text-mute italic text-sm">(chưa có nội dung)</span>
+              )}
+            </div>
+          </div>
         </div>
+
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={form.published} onChange={(e) => setForm({ ...form, published: e.target.checked })} />
           Đăng công khai trên trang chủ

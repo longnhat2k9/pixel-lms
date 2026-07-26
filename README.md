@@ -147,6 +147,13 @@ Cú pháp được hỗ trợ:
 Không có ô "thêm link ảnh" riêng ở phần tạo câu hỏi — chèn ảnh trực tiếp trong nội dung bằng cú pháp
 Markdown ở trên là đủ.
 
+**Xem trước trực tiếp (live preview):** cả 3 nơi soạn nội dung — bài học (`/lessons/[id]`), câu hỏi
+trong đề thi (`/teacher/questionbank/[id]`), bài viết (`/teacher/posts`) — đều hiện khung xem trước
+ngay bên phải ô nhập (xếp chồng lên nhau trên màn hình nhỏ), cập nhật theo từng ký tự gõ vào, không cần
+bấm nút riêng. Riêng phần **câu hỏi**, khung xem trước hiển thị **y hệt giao diện câu hỏi sau khi lưu**
+(cùng component `QuestionCard`) — đủ cả khoanh tròn lựa chọn A/B/C/D, tô màu đáp án đúng, khung đáp án
+điền khuyết... để biết chắc trông sẽ như thế nào trước khi lưu, không chỉ là đoạn Markdown thô.
+
 ---
 
 ## 8. Cấu trúc thư mục

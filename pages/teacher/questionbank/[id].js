@@ -1,18 +1,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Layout from "../../../components/Layout";
-import MarkdownRenderer from "../../../components/MarkdownRenderer";
+import QuestionCard, { TYPE_LABEL } from "../../../components/QuestionCard";
 import { printReact } from "../../../lib/print";
 import { ExamPaperDoc, AnswerKeyDoc } from "../../../components/printDocs";
 import { useUser, apiFetch } from "../../../lib/useUser";
-
-const TYPE_LABEL = {
-  choice2: "2 lựa chọn (Đúng/Sai)",
-  choice4: "4 lựa chọn",
-  fill_blank: "Điền khuyết",
-  essay: "Tự luận",
-  matching: "Nối câu",
-};
 
 function emptyForm() {
   return {
@@ -49,7 +41,7 @@ function buildPayload(form) {
   } else if (form.type === "fill_blank") {
     correct_answer = { value: form.correctText };
   }
-  return { type: form.type, content: form.content, points: Number(form.points), data, correct_answer };
+  return { type: form.type, content: form.content, points: Number(form.points) || 0, data, correct_answer };
 }
 
 function QuestionFields({ form, setForm }) {
@@ -76,12 +68,6 @@ function QuestionFields({ form, setForm }) {
         <div className="text-xs text-mute mt-1">
           Hỗ trợ Markdown & LaTeX: chèn ảnh bằng <code>![mô tả](url)</code>, công thức bằng <code>$...$</code> hoặc <code>$$...$$</code>.
         </div>
-        {form.content && (
-          <div className="mt-2 bg-panel2 rounded-pixel p-3 text-sm">
-            <div className="text-xs text-mute mb-1">Xem trước:</div>
-            <MarkdownRenderer content={form.content} />
-          </div>
-        )}
       </div>
 
       {form.type === "choice2" && (
@@ -124,6 +110,24 @@ function QuestionFields({ form, setForm }) {
         <div className="text-xs text-mute">Câu {form.type === "essay" ? "tự luận" : "nối câu"} được chấm điểm thủ công ở phần Bài làm.</div>
       )}
     </>
+  );
+}
+
+function QuestionFormWithPreview({ form, setForm, onSubmit, submitLabel, onCancel }) {
+  return (
+    <div className="grid lg:grid-cols-2 gap-4">
+      <form onSubmit={onSubmit} className="pxl-card p-5 space-y-3">
+        <QuestionFields form={form} setForm={setForm} />
+        <div className="flex gap-2">
+          <button type="submit" className="pxl-btn">{submitLabel}</button>
+          {onCancel && <button type="button" className="pxl-btn-outline" onClick={onCancel}>Hủy</button>}
+        </div>
+      </form>
+      <div className="lg:sticky lg:top-5 self-start">
+        <div className="text-xs text-mute mb-2">Xem trước — hiển thị đúng như câu hỏi sau khi lưu</div>
+        <QuestionCard q={buildPayload(form)} label="Câu hỏi" />
+      </div>
+    </div>
   );
 }
 
@@ -250,86 +254,35 @@ export default function PaperDetail() {
 
       {error && <div className="mb-4 text-sm text-danger">{error}</div>}
 
-      <form onSubmit={addQuestion} className="pxl-card p-5 mb-8 space-y-3">
-        <QuestionFields form={form} setForm={setForm} />
-        <button className="pxl-btn">+ Thêm câu hỏi</button>
-      </form>
+      <div className="mb-8">
+        <QuestionFormWithPreview form={form} setForm={setForm} onSubmit={addQuestion} submitLabel="+ Thêm câu hỏi" />
+      </div>
 
       <div className="space-y-3">
         {questions.map((q, idx) => {
-          const letters = ["A", "B", "C", "D"];
-
           if (editingId === q.id) {
             return (
-              <div key={q.id} className="pxl-card p-5 space-y-3 border border-accent/40">
-                <div className="text-xs text-mute">Đang sửa câu {idx + 1}</div>
-                <QuestionFields form={editForm} setForm={setEditForm} />
-                <div className="flex gap-2">
-                  <button className="pxl-btn" onClick={() => saveEdit(q.id)}>Lưu</button>
-                  <button className="pxl-btn-outline" onClick={cancelEdit}>Hủy</button>
-                </div>
+              <div key={q.id}>
+                <div className="text-xs text-mute mb-2">Đang sửa câu {idx + 1}</div>
+                <QuestionFormWithPreview
+                  form={editForm}
+                  setForm={setEditForm}
+                  onSubmit={(e) => { e.preventDefault(); saveEdit(q.id); }}
+                  submitLabel="Lưu"
+                  onCancel={cancelEdit}
+                />
               </div>
             );
           }
 
           return (
-            <div key={q.id} className="pxl-card p-5">
-              <div className="flex items-start justify-between gap-4 mb-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="pxl-badge bg-panel2 text-gray-300">{TYPE_LABEL[q.type]}</span>
-                  <span className="pxl-badge bg-panel2 text-gray-300">{q.points} điểm</span>
-                </div>
-                <div className="flex gap-3 shrink-0">
-                  <button className="text-accent text-xs" onClick={() => startEdit(q)}>Sửa</button>
-                  <button className="text-danger text-xs" onClick={() => removeQuestion(q.id)}>Xóa</button>
-                </div>
-              </div>
-
-              <div className="flex gap-2 mb-3">
-                <span className="text-sm font-semibold text-mute shrink-0">Câu {idx + 1}.</span>
-                <div className="text-sm flex-1 min-w-0">
-                  <MarkdownRenderer content={q.content} />
-                </div>
-              </div>
-
-              {(q.type === "choice2" || q.type === "choice4") && (
-                <div className={`grid gap-2 ${q.type === "choice4" ? "md:grid-cols-2" : ""}`}>
-                  {(q.data?.options || []).map((o, i) => {
-                    const isCorrect = String(i) === String(q.correct_answer?.value);
-                    return (
-                      <div
-                        key={i}
-                        className={`flex items-center gap-2 rounded-pixel px-3 py-2 text-sm ${
-                          isCorrect ? "bg-accent2/10 border border-accent2/40" : "bg-panel2 border border-transparent"
-                        }`}
-                      >
-                        <span
-                          className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold ${
-                            isCorrect ? "bg-accent2 text-ink" : "bg-line text-gray-300"
-                          }`}
-                        >
-                          {q.type === "choice4" ? letters[i] : isCorrect ? "✓" : ""}
-                        </span>
-                        <span className={`min-w-0 ${isCorrect ? "text-accent2" : "text-gray-300"}`}>
-                          <MarkdownRenderer content={o} inline />
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {q.type === "fill_blank" && (
-                <div className="inline-flex items-center gap-2 bg-accent2/10 border border-accent2/40 rounded-pixel px-3 py-1.5 text-sm text-accent2">
-                  <span className="text-xs text-mute">Đáp án đúng:</span>
-                  <MarkdownRenderer content={q.correct_answer?.value} inline />
-                </div>
-              )}
-
-              {(q.type === "essay" || q.type === "matching") && (
-                <div className="text-xs text-mute">Chấm điểm thủ công khi có bài nộp.</div>
-              )}
-            </div>
+            <QuestionCard
+              key={q.id}
+              q={q}
+              label={`Câu ${idx + 1}.`}
+              onEdit={() => startEdit(q)}
+              onDelete={() => removeQuestion(q.id)}
+            />
           );
         })}
         {questions.length === 0 && <div className="text-mute text-sm">Chưa có câu hỏi nào.</div>}
