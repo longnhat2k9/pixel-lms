@@ -81,6 +81,17 @@ export default function SubmissionDetail() {
     } catch (e) { setError(e.message); }
   }
 
+  async function regrade() {
+    if (!confirm("Chấm lại bài làm này theo đáp án mới nhất của đề thi? Điểm chấm tay đã lưu (nếu có) sẽ được giữ nguyên.")) return;
+    setError("");
+    setSaved(false);
+    try {
+      await apiFetch(`/api/submissions/${id}/action`, { method: "POST", body: JSON.stringify({ action: "regrade" }) });
+      setSaved(true);
+      load();
+    } catch (e) { setError(e.message); }
+  }
+
   if (!user) return null;
   if (!detail) return <Layout user={user}>{error ? <div className="text-danger">{error}</div> : <div className="text-mute">Đang tải...</div>}</Layout>;
 
@@ -213,6 +224,7 @@ export default function SubmissionDetail() {
 
         <div className="flex items-center gap-3">
           <button className="pxl-btn" onClick={saveGrading}>Lưu điểm</button>
+          <button className="pxl-btn-outline" onClick={regrade}>🔄 Chấm lại bài này</button>
           {saved && <span className="text-sm text-accent2">Đã lưu.</span>}
         </div>
       </div>

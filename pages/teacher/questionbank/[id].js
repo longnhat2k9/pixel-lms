@@ -135,6 +135,7 @@ export default function PaperDetail() {
   const [questions, setQuestions] = useState([]);
   const [form, setForm] = useState(emptyForm());
   const [error, setError] = useState("");
+  const [regradeMsg, setRegradeMsg] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState(null);
 
@@ -196,6 +197,16 @@ export default function PaperDetail() {
     } catch (e) { setError(e.message); }
   }
 
+  async function regradeAll() {
+    if (!confirm("Chấm lại TẤT CẢ bài làm (ca thi + luyện tập) đã dùng đề thi này theo đáp án mới nhất? Điểm chấm tay đã lưu sẽ được giữ nguyên.")) return;
+    setError("");
+    setRegradeMsg("");
+    try {
+      const d = await apiFetch(`/api/questionbank/papers/${id}/regrade`, { method: "POST" });
+      setRegradeMsg(`Đã chấm lại ${d.regraded} bài làm.`);
+    } catch (e) { setError(e.message); }
+  }
+
   if (!user || !paper) return user ? <Layout user={user}><div className="text-mute">Đang tải...</div></Layout> : null;
 
   return (
@@ -217,9 +228,17 @@ export default function PaperDetail() {
           >
             🖨️ In đáp án
           </button>
+          <button
+            className="pxl-btn-outline text-xs px-3 py-1.5"
+            disabled={questions.length === 0}
+            onClick={regradeAll}
+          >
+            🔄 Chấm lại tất cả bài làm
+          </button>
         </div>
       </div>
       <p className="text-mute mb-3 text-sm">{paper.description}</p>
+      {regradeMsg && <div className="mb-3 text-sm text-accent2">{regradeMsg}</div>}
 
       <label className="pxl-card p-4 mb-6 flex items-center gap-3 cursor-pointer w-fit">
         <input type="checkbox" className="w-4 h-4" checked={!!paper.show_answers} onChange={toggleShowAnswers} />

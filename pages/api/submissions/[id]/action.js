@@ -1,7 +1,8 @@
 import { DB } from "../../../../lib/db";
 import { requireRole } from "../../../../lib/auth";
+import { computeAttemptScores } from "../../../../lib/grading";
 
-// Teacher/Admin only: cancel, force_end, adjust_time
+// Teacher/Admin only: cancel, force_end, adjust_time, grade, regrade
 export default async function handler(req, res) {
   const { id } = req.query;
   const session = requireRole(req, res, ["admin", "teacher"]);
@@ -54,27 +55,31 @@ export default async function handler(req, res) {
       `SELECT id, type, points, correct_answer FROM questions WHERE paper_id = $1`,
       [attempt.paper_id]
     );
-    const answers = attempt.answers || {};
-
-    let finalScore = 0;
-    for (const q of questions) {
-      if (Object.prototype.hasOwnProperty.call(overrides, q.id)) {
-        finalScore += Number(overrides[q.id] || 0);
-        continue;
-      }
-      const given = answers[q.id];
-      if (q.type === "choice2" || q.type === "choice4") {
-        if (given !== undefined && String(given) === String(q.correct_answer?.value)) finalScore += Number(q.points);
-      } else if (q.type === "fill_blank") {
-        const norm = (s) => String(s || "").trim().toLowerCase();
-        if (given !== undefined && norm(given) === norm(q.correct_answer?.value)) finalScore += Number(q.points);
-      }
-      // essay/matching with no override contribute 0 until graded
-    }
+    const { autoScore, finalScore } = computeAttemptScores(questions, attempt.answers || {}, overrides);
 
     const { rows: updated } = await DB.submissions(
-      `UPDATE attempts SET manual_overrides = $1, final_score = $2 WHERE id = $3 RETURNING *`,
-      [JSON.stringify(overrides), finalScore, id]
+      `UPDATE attempts SET manual_overrides = $1, auto_score = $2, final_score = $3 WHERE id = $4 RETURNING *`,
+      [JSON.stringify(overrides), autoScore, finalScore, id]
+    );
+    return res.status(200).json({ attempt: updated[0] });
+  }
+
+  if (action === "regrade") {
+    // Recomputes the score against the CURRENT correct answers in the
+    // question bank — for when a teacher edited an answer key after
+    // students had already submitted. Existing manual overrides (e.g. an
+    // essay score, or a deliberate point adjustment) are kept as-is.
+    if (attempt.status === "in_progress") {
+      return res.status(400).json({ error: "Bài làm chưa nộp, không thể chấm lại." });
+    }
+    const { rows: questions } = await DB.questionbank(
+      `SELECT id, type, points, correct_answer FROM questions WHERE paper_id = $1`,
+      [attempt.paper_id]
+    );
+    const { autoScore, finalScore } = computeAttemptScores(questions, attempt.answers || {}, attempt.manual_overrides || {});
+    const { rows: updated } = await DB.submissions(
+      `UPDATE attempts SET auto_score = $1, final_score = $2 WHERE id = $3 RETURNING *`,
+      [autoScore, finalScore, id]
     );
     return res.status(200).json({ attempt: updated[0] });
   }

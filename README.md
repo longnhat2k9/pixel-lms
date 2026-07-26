@@ -228,7 +228,23 @@ Mỗi **đề thi** (trang Đề thi → chọn đề) có công tắc **"Học 
 
 ---
 
-## 12. Phát triển local (tùy chọn)
+## 12. Chấm lại khi sửa đáp án
+
+Nếu giáo viên sửa đáp án đúng của một câu hỏi sau khi học sinh đã nộp bài, điểm cũ sẽ không tự cập
+nhật — cần bấm nút **"🔄 Chấm lại"**:
+
+- **Ở trang chi tiết một bài làm** (`/teacher/submissions/[id]`): nút "Chấm lại bài này" chỉ tính lại
+  điểm của **bài làm đang xem**.
+- **Ở trang chi tiết một đề thi** (`/teacher/questionbank/[id]`): nút "Chấm lại tất cả bài làm" tính lại
+  điểm của **mọi bài làm đã nộp** (cả ca thi lẫn luyện tập) từng dùng đề thi đó.
+
+Cả hai đều **giữ nguyên điểm chấm tay đã lưu** (ví dụ điểm tự luận, hoặc điểm bạn từng ghi đè thủ công
+cho một câu trắc nghiệm) — chỉ tính lại phần các câu chưa được chấm tay, dựa trên đáp án đúng **hiện tại**
+trong đề thi. Bài làm đang ở trạng thái "Đang làm" (chưa nộp) sẽ được bỏ qua.
+
+---
+
+## 13. Phát triển local (tùy chọn)
 
 ```bash
 npm install
