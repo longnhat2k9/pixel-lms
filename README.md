@@ -79,8 +79,9 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 > trước khi dùng tính năng "Gán đề thi luyện tập vào bài học" — bản cập nhật này thêm bảng mới
 > `lesson_practice_links` vào DB Khóa học, đồng thời nới lỏng ràng buộc `session_id` và thêm cột
 > `kind` vào bảng `attempts` (DB Bài làm) để lưu kết quả luyện tập như một bài làm, và thêm cột
-> `show_answers` vào bảng `papers` (DB Đề thi) cho tính năng bật/tắt xem đáp án. Việc gọi lại hoàn
-> toàn an toàn, không xóa dữ liệu cũ.
+> `show_answers` vào bảng `papers` (DB Đề thi) cho tính năng bật/tắt xem đáp án, và cột
+> `time_limit_minutes` vào bảng `lesson_practice_links` để đặt giờ luyện tập riêng cho từng đề. Việc
+> gọi lại hoàn toàn an toàn, không xóa dữ liệu cũ.
 
 Sau khi deploy xong, mở trình duyệt và truy cập:
 
@@ -251,7 +252,21 @@ trong đề thi. Bài làm đang ở trạng thái "Đang làm" (chưa nộp) s�
 
 ---
 
-## 13. Phát triển local (tùy chọn)
+## 13. Giới hạn thời gian luyện tập
+
+Ở khối "📝 Thực hành" cuối mỗi bài học, mỗi đề gán vào đó có thể bật **"Giới hạn thời gian"** riêng
+(tính bằng phút) thay vì để học sinh làm tự do:
+
+- **Không tick "Giới hạn thời gian"** (mặc định): học sinh làm tự do như trước, không đếm giờ.
+- **Tick + nhập số phút**: khi học sinh bấm "Làm bài", trang luyện tập hiện đồng hồ đếm ngược. Hết giờ
+  tự động nộp bài. Sau khi nộp (dù tự động hay bấm tay), phải bấm **"↻ Làm lại"** mới làm tiếp được —
+  lúc đó đồng hồ được cấp lại đầy đủ số phút.
+- Giới hạn này gắn với **từng cặp bài học – đề thi**, không phải gắn cứng vào đề thi — cùng một đề có
+  thể gán vào bài học khác với thời gian khác nhau (hoặc không giới hạn).
+
+---
+
+## 14. Phát triển local (tùy chọn)
 
 ```bash
 npm install

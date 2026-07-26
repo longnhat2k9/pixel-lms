@@ -55,15 +55,31 @@ export default function LessonPage() {
     } catch (e) { setError(e.message); }
   }
 
-  async function togglePaperLink(paperId) {
-    const current = new Set(linkedPapers.map((p) => p.id));
-    if (current.has(paperId)) current.delete(paperId); else current.add(paperId);
+  function currentLinksPayload(papers) {
+    return papers.map((p) => ({ paperId: p.id, timeLimitMinutes: p.time_limit_minutes || null }));
+  }
+
+  async function togglePaperLink(paper) {
+    const exists = linkedPapers.some((p) => p.id === paper.id);
+    const nextList = exists
+      ? linkedPapers.filter((p) => p.id !== paper.id)
+      : [...linkedPapers, { ...paper, time_limit_minutes: null }];
     try {
       await apiFetch(`/api/lessons/${id}/practice`, {
-        method: "POST", body: JSON.stringify({ paperIds: Array.from(current) }),
+        method: "POST", body: JSON.stringify({ links: currentLinksPayload(nextList) }),
       });
       const p = await apiFetch(`/api/lessons/${id}/practice`);
       setLinkedPapers(p.papers);
+    } catch (e) { setError(e.message); }
+  }
+
+  async function setTimeLimit(paperId, minutes) {
+    const nextList = linkedPapers.map((p) => (p.id === paperId ? { ...p, time_limit_minutes: minutes } : p));
+    setLinkedPapers(nextList); // optimistic, so typing doesn't feel laggy
+    try {
+      await apiFetch(`/api/lessons/${id}/practice`, {
+        method: "POST", body: JSON.stringify({ links: currentLinksPayload(nextList) }),
+      });
     } catch (e) { setError(e.message); }
   }
 
@@ -143,7 +159,7 @@ export default function LessonPage() {
 
             {meta.canEdit && (
               <div className="text-xs text-mute mb-3">
-                Học sinh có thể bấm làm bài trực tiếp, không giới hạn số lần làm lại (khác với ca thi ở mục "Thi"). Mỗi lần nộp đều được ghi lại trong mục Bài làm.
+                Học sinh có thể bấm làm bài trực tiếp, làm lại không giới hạn số lần (khác với ca thi ở mục "Thi"). Có thể đặt thời gian làm bài riêng cho từng đề bên dưới — để trống là không giới hạn. Mỗi lần nộp đều được ghi lại trong mục Bài làm.
               </div>
             )}
 
@@ -155,7 +171,7 @@ export default function LessonPage() {
                     <input
                       type="checkbox"
                       checked={linkedPapers.some((l) => l.id === p.id)}
-                      onChange={() => togglePaperLink(p.id)}
+                      onChange={() => togglePaperLink(p)}
                     />
                     <span>{p.title}</span>
                   </label>
@@ -167,21 +183,53 @@ export default function LessonPage() {
               <div className="text-sm text-mute">Chưa có đề thi luyện tập nào được gán cho bài học này.</div>
             ) : (
               <div className="space-y-2">
-                {linkedPapers.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between bg-panel2 rounded-pixel px-4 py-3">
-                    <div>
-                      <div className="text-sm font-medium">{p.title}</div>
-                      <div className="text-xs text-mute">{p.question_count} câu hỏi</div>
+                {linkedPapers.map((p) => {
+                  const isTimed = p.time_limit_minutes != null;
+                  const practiceHref = `/practice/${p.id}?lessonId=${id}${isTimed ? `&minutes=${p.time_limit_minutes}` : ""}`;
+                  return (
+                    <div key={p.id} className="bg-panel2 rounded-pixel px-4 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-medium">{p.title}</div>
+                          <div className="text-xs text-mute">
+                            {p.question_count} câu hỏi
+                            {isTimed ? ` · ${p.time_limit_minutes} phút` : " · Không giới hạn thời gian"}
+                          </div>
+                        </div>
+                        {user.role === "student" ? (
+                          <Link href={practiceHref} className="pxl-btn text-xs px-3 py-1.5 shrink-0">
+                            Làm bài
+                          </Link>
+                        ) : (
+                          <Link href={practiceHref} className="text-xs text-accent shrink-0">Xem thử</Link>
+                        )}
+                      </div>
+
+                      {meta.canEdit && (
+                        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-line">
+                          <label className="flex items-center gap-1.5 text-xs text-mute cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={isTimed}
+                              onChange={(e) => setTimeLimit(p.id, e.target.checked ? 15 : null)}
+                            />
+                            Giới hạn thời gian
+                          </label>
+                          {isTimed && (
+                            <>
+                              <input
+                                type="number" min="1" className="pxl-input w-20 py-1 text-xs"
+                                value={p.time_limit_minutes}
+                                onChange={(e) => setTimeLimit(p.id, Number(e.target.value) || 1)}
+                              />
+                              <span className="text-xs text-mute">phút mỗi lượt làm bài</span>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    {user.role === "student" ? (
-                      <Link href={`/practice/${p.id}`} className="pxl-btn text-xs px-3 py-1.5">
-                        Làm bài
-                      </Link>
-                    ) : (
-                      <Link href={`/practice/${p.id}`} className="text-xs text-accent">Xem thử</Link>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

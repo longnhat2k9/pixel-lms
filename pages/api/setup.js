@@ -95,6 +95,7 @@ export default async function handler(req, res) {
         PRIMARY KEY (lesson_id, paper_id)
       );
     `);
+    await DB.courses(`ALTER TABLE lesson_practice_links ADD COLUMN IF NOT EXISTS time_limit_minutes INT;`);
     results.courses = "ok";
   } catch (e) {
     results.courses = `ERROR: ${e.message}`;

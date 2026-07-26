@@ -24,7 +24,7 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     const { rows: links } = await DB.courses(
-      `SELECT paper_id FROM lesson_practice_links WHERE lesson_id = $1`,
+      `SELECT paper_id, time_limit_minutes FROM lesson_practice_links WHERE lesson_id = $1`,
       [id]
     );
     const paperIds = links.map((l) => l.paper_id);
@@ -35,18 +35,23 @@ export default async function handler(req, res) {
        FROM papers p WHERE p.id = ANY($1::uuid[])`,
       [paperIds]
     );
-    return res.status(200).json({ papers });
+    const limitByPaper = Object.fromEntries(links.map((l) => [l.paper_id, l.time_limit_minutes]));
+    const merged = papers.map((p) => ({ ...p, time_limit_minutes: limitByPaper[p.id] ?? null }));
+    return res.status(200).json({ papers: merged });
   }
 
   if (req.method === "POST") {
     if (!access.edit) return res.status(403).json({ error: "Bạn không có quyền chỉnh sửa bài học này." });
-    const { paperIds } = req.body || {};
-    if (!Array.isArray(paperIds)) return res.status(400).json({ error: "Thiếu danh sách đề thi." });
+    // body: { links: [{ paperId, timeLimitMinutes }] } — timeLimitMinutes null/omitted = không giới hạn.
+    // Full replace, same pattern as course access.
+    const { links } = req.body || {};
+    if (!Array.isArray(links)) return res.status(400).json({ error: "Thiếu danh sách đề thi." });
     await DB.courses(`DELETE FROM lesson_practice_links WHERE lesson_id = $1`, [id]);
-    for (const pid of paperIds) {
+    for (const link of links) {
       await DB.courses(
-        `INSERT INTO lesson_practice_links (lesson_id, paper_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
-        [id, pid]
+        `INSERT INTO lesson_practice_links (lesson_id, paper_id, time_limit_minutes) VALUES ($1,$2,$3)
+         ON CONFLICT DO NOTHING`,
+        [id, link.paperId, link.timeLimitMinutes || null]
       );
     }
     return res.status(200).json({ ok: true });
