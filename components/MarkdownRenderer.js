@@ -22,9 +22,18 @@ export default function MarkdownRenderer({ content, className = "", inline = fal
         rehypePlugins={[rehypeKatex]}
         components={{
           p: inline ? (props) => <>{props.children}</> : (props) => <p {...props} />,
+          // Images always render at a readable size, whether the surrounding
+          // text is in "inline" mode (question stems, answer options) or
+          // normal block mode (lessons, posts) — inline mode only affects
+          // paragraph line-breaking, never how big an actual picture shows.
           img: (props) => (
             // eslint-disable-next-line @next/next/no-img-element
-            <img {...props} className={inline ? "inline-block h-5 align-text-bottom" : "max-w-full rounded-pixel my-2"} loading="lazy" alt={props.alt || ""} />
+            <img
+              {...props}
+              className="max-w-full max-h-96 rounded-pixel my-1 inline-block align-middle"
+              loading="lazy"
+              alt={props.alt || ""}
+            />
           ),
           a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-accent underline" />,
           table: (props) => <table {...props} className="border-collapse w-full text-sm my-2" />,
