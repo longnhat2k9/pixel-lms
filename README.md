@@ -266,7 +266,18 @@ trong đề thi. Bài làm đang ở trạng thái "Đang làm" (chưa nộp) s�
 
 ---
 
-## 14. Phát triển local (tùy chọn)
+## 14. Điền khuyết — nhiều đáp án đúng
+
+Khi tạo/sửa câu hỏi dạng **Điền khuyết**, có thể bấm **"+ Thêm đáp án đúng khác"** để nhập nhiều đáp án
+được chấp nhận cho cùng một câu (ví dụ: "Hà Nội", "Ha Noi", "HN" đều được tính đúng). Học sinh chỉ cần
+trả lời trùng với **một trong số đó** (không phân biệt hoa/thường, khoảng trắng đầu/cuối) là được tính
+điểm. Mọi nơi hiển thị đáp án đúng (xem trước lúc soạn, làm bài, luyện tập, chấm bài, in đề/đáp án) đều
+liệt kê đầy đủ các đáp án được chấp nhận, nối bằng "hoặc". Câu điền khuyết tạo từ bản cũ (chỉ có 1 đáp
+án) vẫn hoạt động bình thường, không cần chỉnh sửa lại.
+
+---
+
+## 15. Phát triển local (tùy chọn)
 
 ```bash
 npm install

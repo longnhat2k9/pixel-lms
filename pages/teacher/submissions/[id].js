@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Layout from "../../../components/Layout";
 import MarkdownRenderer from "../../../components/MarkdownRenderer";
 import { useUser, apiFetch } from "../../../lib/useUser";
+import { gradeQuestion, fillBlankValues } from "../../../lib/grading";
 
 const STATUS_LABEL = {
   in_progress: "Đang làm", submitted: "Đã nộp", cancelled: "Đã hủy", force_ended: "Bị buộc kết thúc",
@@ -21,17 +22,6 @@ const TYPE_LABEL = {
   matching: "Nối câu",
 };
 const LETTERS = ["A", "B", "C", "D"];
-
-function autoPoints(q, given) {
-  if (q.type === "choice2" || q.type === "choice4") {
-    return given !== undefined && String(given) === String(q.correct_answer?.value) ? Number(q.points) : 0;
-  }
-  if (q.type === "fill_blank") {
-    const norm = (s) => String(s || "").trim().toLowerCase();
-    return given !== undefined && norm(given) === norm(q.correct_answer?.value) ? Number(q.points) : 0;
-  }
-  return 0; // essay/matching: no auto grade until a teacher enters one
-}
 
 export default function SubmissionDetail() {
   const user = useUser(["admin", "teacher"]);
@@ -52,7 +42,7 @@ export default function SubmissionDetail() {
       for (const q of d.questions) {
         const given = d.attempt.answers?.[q.id];
         initial[q.id] = String(
-          Object.prototype.hasOwnProperty.call(overrides, q.id) ? overrides[q.id] : autoPoints(q, given)
+          Object.prototype.hasOwnProperty.call(overrides, q.id) ? overrides[q.id] : gradeQuestion(q, given)
         );
       }
       setScores(initial);
@@ -194,7 +184,14 @@ export default function SubmissionDetail() {
                     </div>
                     <div className="bg-accent2/10 border border-accent2/40 rounded-pixel px-3 py-2 text-sm text-accent2">
                       <div className="text-[11px] text-mute mb-0.5">Đáp án đúng</div>
-                      <MarkdownRenderer content={String(q.correct_answer?.value ?? "")} inline />
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {fillBlankValues(q.correct_answer).map((v, i) => (
+                          <span key={i} className="flex items-center gap-1.5">
+                            {i > 0 && <span className="text-mute">hoặc</span>}
+                            <MarkdownRenderer content={String(v)} inline />
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}

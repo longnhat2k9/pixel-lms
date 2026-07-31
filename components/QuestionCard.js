@@ -1,4 +1,5 @@
 import MarkdownRenderer from "./MarkdownRenderer";
+import { fillBlankValues } from "../lib/grading";
 
 export const TYPE_LABEL = {
   choice2: "2 lựa chọn (Đúng/Sai)",
@@ -61,9 +62,18 @@ export default function QuestionCard({ q, label, onEdit, onDelete }) {
       )}
 
       {q.type === "fill_blank" && (
-        <div className="inline-flex items-center gap-2 bg-accent2/10 border border-accent2/40 rounded-pixel px-3 py-1.5 text-sm text-accent2">
+        <div className="inline-flex flex-wrap items-center gap-2 bg-accent2/10 border border-accent2/40 rounded-pixel px-3 py-1.5 text-sm text-accent2">
           <span className="text-xs text-mute">Đáp án đúng:</span>
-          {q.correct_answer?.value ? <MarkdownRenderer content={q.correct_answer.value} inline /> : <span className="italic">(chưa nhập)</span>}
+          {fillBlankValues(q.correct_answer).length > 0 ? (
+            fillBlankValues(q.correct_answer).map((v, i) => (
+              <span key={i} className="flex items-center gap-2">
+                {i > 0 && <span className="text-mute text-xs">hoặc</span>}
+                <MarkdownRenderer content={v} inline />
+              </span>
+            ))
+          ) : (
+            <span className="italic">(chưa nhập)</span>
+          )}
         </div>
       )}
 

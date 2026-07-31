@@ -13,19 +13,24 @@ function emptyForm() {
     points: 1,
     options: ["", "", "", ""],
     correctIndex: 0,
-    correctText: "",
+    correctTexts: [""],
   };
 }
 
 function questionToForm(q) {
   const isChoice = q.type === "choice2" || q.type === "choice4";
+  const legacyValues = Array.isArray(q.correct_answer?.values)
+    ? q.correct_answer.values
+    : q.correct_answer?.value !== undefined && q.correct_answer?.value !== null
+    ? [q.correct_answer.value]
+    : [];
   return {
     type: q.type,
     content: q.content,
     points: q.points,
     options: q.type === "choice4" ? (q.data?.options || ["", "", "", ""]) : ["", "", "", ""],
     correctIndex: isChoice ? Number(q.correct_answer?.value || 0) : 0,
-    correctText: q.type === "fill_blank" ? (q.correct_answer?.value || "") : "",
+    correctTexts: q.type === "fill_blank" ? (legacyValues.length ? legacyValues : [""]) : [""],
   };
 }
 
@@ -39,7 +44,7 @@ function buildPayload(form) {
     data = { options: form.options };
     correct_answer = { value: String(form.correctIndex) };
   } else if (form.type === "fill_blank") {
-    correct_answer = { value: form.correctText };
+    correct_answer = { values: (form.correctTexts || []).map((v) => v.trim()).filter((v) => v !== "") };
   }
   return { type: form.type, content: form.content, points: Number(form.points) || 0, data, correct_answer };
 }
@@ -100,9 +105,40 @@ function QuestionFields({ form, setForm }) {
 
       {form.type === "fill_blank" && (
         <div>
-          <label className="text-xs text-mute">Đáp án đúng</label>
-          <input className="pxl-input mt-1" value={form.correctText}
-            onChange={(e) => setForm({ ...form, correctText: e.target.value })} required />
+          <label className="text-xs text-mute">Đáp án đúng (có thể thêm nhiều đáp án được chấp nhận)</label>
+          <div className="space-y-2 mt-1">
+            {form.correctTexts.map((text, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  className="pxl-input"
+                  placeholder={i === 0 ? "Đáp án đúng" : `Đáp án đúng khác #${i + 1}`}
+                  value={text}
+                  onChange={(e) => {
+                    const correctTexts = [...form.correctTexts];
+                    correctTexts[i] = e.target.value;
+                    setForm({ ...form, correctTexts });
+                  }}
+                  required={i === 0}
+                />
+                {form.correctTexts.length > 1 && (
+                  <button
+                    type="button"
+                    className="text-danger text-xs shrink-0"
+                    onClick={() => setForm({ ...form, correctTexts: form.correctTexts.filter((_, j) => j !== i) })}
+                  >
+                    Xóa
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="pxl-btn-outline text-xs px-2 py-1 mt-2"
+            onClick={() => setForm({ ...form, correctTexts: [...form.correctTexts, ""] })}
+          >
+            + Thêm đáp án đúng khác
+          </button>
         </div>
       )}
 

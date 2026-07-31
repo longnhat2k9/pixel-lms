@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { useUser, apiFetch } from "../../../lib/useUser";
 import MarkdownRenderer from "../../../components/MarkdownRenderer";
+import { matchFillBlank, fillBlankValues } from "../../../lib/grading";
 
 function useCountdown(deadline, onExpire) {
   const [remaining, setRemaining] = useState(null);
@@ -131,8 +132,7 @@ export default function ExamTake() {
           const isChoice = q.type === "choice2" || q.type === "choice4";
           const isCorrectChoice = (i) => hasAnswerKey && String(i) === String(q.correct_answer?.value);
           const isChosenChoice = (i) => given === String(i);
-          const fillCorrect = hasAnswerKey && q.type === "fill_blank" &&
-            String(given || "").trim().toLowerCase() === String(q.correct_answer?.value || "").trim().toLowerCase();
+          const fillCorrect = hasAnswerKey && q.type === "fill_blank" && matchFillBlank(given, q.correct_answer);
 
           return (
             <div key={q.id} className="pxl-card p-5">
@@ -182,8 +182,14 @@ export default function ExamTake() {
                     onChange={(e) => setAnswer(q.id, e.target.value)}
                   />
                   {hasAnswerKey && (
-                    <div className={`text-xs mt-1 ${fillCorrect ? "text-accent2" : "text-danger"}`}>
-                      Đáp án đúng: <MarkdownRenderer content={String(q.correct_answer?.value ?? "")} inline />
+                    <div className={`text-xs mt-1 flex flex-wrap items-center gap-1.5 ${fillCorrect ? "text-accent2" : "text-danger"}`}>
+                      <span>Đáp án đúng:</span>
+                      {fillBlankValues(q.correct_answer).map((v, i) => (
+                        <span key={i} className="flex items-center gap-1.5">
+                          {i > 0 && <span className="text-mute">hoặc</span>}
+                          <MarkdownRenderer content={String(v)} inline />
+                        </span>
+                      ))}
                     </div>
                   )}
                 </div>

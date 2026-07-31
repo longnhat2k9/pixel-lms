@@ -1,5 +1,6 @@
 import { DB } from "../../../../lib/db";
 import { requireRole } from "../../../../lib/auth";
+import { gradeQuestion } from "../../../../lib/grading";
 
 // Auto-grades objective question types (choice2, choice4, fill_blank).
 // essay/matching are left for manual grading via manual_overrides.
@@ -10,14 +11,7 @@ async function autoGrade(paperId, answers) {
   );
   let total = 0;
   for (const q of questions) {
-    const given = answers?.[q.id];
-    if (given === undefined || given === null) continue;
-    if (q.type === "choice2" || q.type === "choice4") {
-      if (String(given) === String(q.correct_answer?.value)) total += Number(q.points);
-    } else if (q.type === "fill_blank") {
-      const norm = (s) => String(s || "").trim().toLowerCase();
-      if (norm(given) === norm(q.correct_answer?.value)) total += Number(q.points);
-    }
+    total += gradeQuestion(q, answers?.[q.id]);
   }
   return total;
 }

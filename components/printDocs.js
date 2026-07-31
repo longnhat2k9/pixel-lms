@@ -1,4 +1,5 @@
 import MarkdownRenderer from "./MarkdownRenderer";
+import { fillBlankValues } from "../lib/grading";
 
 const LETTERS = ["A", "B", "C", "D"];
 const today = () => new Date().toLocaleDateString("vi-VN");
@@ -58,7 +59,16 @@ export function AnswerKeyDoc({ paper, questions }) {
                   </>
                 )}
                 {q.type === "choice2" && <b>{q.correct_answer?.value === "0" ? "Đúng" : "Sai"}</b>}
-                {q.type === "fill_blank" && <MarkdownRenderer content={q.correct_answer?.value} inline />}
+                {q.type === "fill_blank" && (
+                  <span className="flex flex-wrap gap-1">
+                    {fillBlankValues(q.correct_answer).map((v, i) => (
+                      <span key={i}>
+                        {i > 0 && " hoặc "}
+                        <MarkdownRenderer content={v} inline />
+                      </span>
+                    ))}
+                  </span>
+                )}
                 {(q.type === "essay" || q.type === "matching") && <span className="note">Chấm tay</span>}
               </td>
               <td>{q.points}</td>

@@ -165,9 +165,15 @@ export default function PracticePaper() {
                   {q.type === "fill_blank" && (
                     <div>
                       <input className="pxl-input" disabled={locked} value={answers[q.id] || ""} onChange={(e) => setAnswer(q.id, e.target.value)} />
-                      {b && b.correctAnswer !== null && (
-                        <div className="text-xs text-accent2 mt-1">
-                          Đáp án đúng: <MarkdownRenderer content={String(b.correctAnswer)} inline />
+                      {b && b.correctAnswer !== null && Array.isArray(b.correctAnswer) && b.correctAnswer.length > 0 && (
+                        <div className="text-xs text-accent2 mt-1 flex flex-wrap items-center gap-1.5">
+                          <span>Đáp án đúng:</span>
+                          {b.correctAnswer.map((v, i) => (
+                            <span key={i} className="flex items-center gap-1.5">
+                              {i > 0 && <span className="text-mute">hoặc</span>}
+                              <MarkdownRenderer content={String(v)} inline />
+                            </span>
+                          ))}
                         </div>
                       )}
                     </div>

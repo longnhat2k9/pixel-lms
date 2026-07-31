@@ -1,6 +1,7 @@
 import { DB } from "../../../../../lib/db";
 import { requireRole } from "../../../../../lib/auth";
 import { canPractice } from "../../../../../lib/practiceAccess";
+import { gradeQuestion, matchFillBlank, fillBlankValues } from "../../../../../lib/grading";
 
 // Grades a practice attempt on the spot and returns the breakdown + correct
 // answers immediately. Students can repeat this an unlimited number of
@@ -34,19 +35,18 @@ export default async function handler(req, res) {
     const given = answers?.[q.id];
     let isCorrect = null; // null = not auto-gradable (essay/matching)
     if (q.type === "choice2" || q.type === "choice4") {
-      isCorrect = given !== undefined && String(given) === String(q.correct_answer?.value);
+      isCorrect = given !== undefined && given !== null && String(given) === String(q.correct_answer?.value);
     } else if (q.type === "fill_blank") {
-      const norm = (s) => String(s || "").trim().toLowerCase();
-      isCorrect = given !== undefined && norm(given) === norm(q.correct_answer?.value);
+      isCorrect = matchFillBlank(given, q.correct_answer);
     }
-    if (isCorrect) score += Number(q.points);
+    score += gradeQuestion(q, given);
     if (!showAnswers) {
       return { questionId: q.id, isCorrect: null, correctAnswer: null, points: Number(q.points) };
     }
     return {
       questionId: q.id,
       isCorrect,
-      correctAnswer: q.correct_answer?.value ?? null,
+      correctAnswer: q.type === "fill_blank" ? fillBlankValues(q.correct_answer) : (q.correct_answer?.value ?? null),
       points: Number(q.points),
     };
   });
