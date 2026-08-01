@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import Layout from "../../components/Layout";
 import { printReact } from "../../lib/print";
 import { SessionListDoc } from "../../components/printDocs";
@@ -18,6 +19,7 @@ export default function ExamsPage() {
   const [expanded, setExpanded] = useState(null);
   const [detail, setDetail] = useState(null);
   const [selected, setSelected] = useState(new Set());
+  const [regradeMsg, setRegradeMsg] = useState({});
 
   async function load() {
     try {
@@ -58,6 +60,20 @@ export default function ExamsPage() {
       await apiFetch(`/api/submissions/${attemptId}/action`, { method: "POST", body: JSON.stringify({ action, minutes }) });
       const d = await apiFetch(`/api/exams/sessions/${expanded}`);
       setDetail(d);
+    } catch (e) { setError(e.message); }
+  }
+
+  async function regradeSession(s) {
+    if (!confirm(`Chấm lại tất cả bài làm đã nộp trong ca thi "${s.title}" theo đáp án mới nhất? Điểm chấm tay đã lưu sẽ được giữ nguyên.`)) return;
+    setError("");
+    setRegradeMsg({ ...regradeMsg, [s.id]: "" });
+    try {
+      const d = await apiFetch(`/api/exams/sessions/${s.id}/regrade`, { method: "POST" });
+      setRegradeMsg({ ...regradeMsg, [s.id]: `Đã chấm lại ${d.regraded} bài làm.` });
+      if (expanded === s.id) {
+        const fresh = await apiFetch(`/api/exams/sessions/${s.id}`);
+        setDetail(fresh);
+      }
     } catch (e) { setError(e.message); }
   }
 
@@ -132,11 +148,14 @@ export default function ExamsPage() {
                 <span className="pxl-badge bg-panel2 text-gray-300">{STATUS_LABEL[s.status]}</span>
                 {s.status !== "active" && <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => setStatus(s, "active")}>Mở ca thi</button>}
                 {s.status !== "ended" && <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => setStatus(s, "ended")}>Đóng ca thi</button>}
+                <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => regradeSession(s)}>🔄 Chấm lại ca thi</button>
                 <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => toggle(s)}>
                   {expanded === s.id ? "Ẩn" : "Xem bài làm"}
                 </button>
               </div>
             </div>
+
+            {regradeMsg[s.id] && <div className="text-xs text-accent2 mt-2">{regradeMsg[s.id]}</div>}
 
             {expanded === s.id && detail && (
               <div className="mt-4 border-t border-line pt-4 space-y-2">
@@ -147,13 +166,18 @@ export default function ExamsPage() {
                       <div>{a.student_name_snapshot}</div>
                       <div className="text-xs text-mute">{ATTEMPT_STATUS_LABEL[a.status]} · Điểm: {a.final_score ?? "—"}</div>
                     </div>
-                    {a.status === "in_progress" && (
-                      <div className="flex gap-2">
-                        <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => attemptAction(a.id, "adjust_time", 5)}>+5 phút</button>
-                        <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => attemptAction(a.id, "force_end")}>Kết thúc</button>
-                        <button className="pxl-btn-danger text-xs px-2 py-1" onClick={() => attemptAction(a.id, "cancel")}>Hủy bài</button>
-                      </div>
-                    )}
+                    <div className="flex gap-2 shrink-0">
+                      {a.status === "in_progress" && (
+                        <>
+                          <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => attemptAction(a.id, "adjust_time", 5)}>+5 phút</button>
+                          <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => attemptAction(a.id, "force_end")}>Kết thúc</button>
+                          <button className="pxl-btn-danger text-xs px-2 py-1" onClick={() => attemptAction(a.id, "cancel")}>Hủy bài</button>
+                        </>
+                      )}
+                      <Link href={`/teacher/submissions/${a.id}`} className="pxl-btn-outline text-xs px-2 py-1">
+                        Xem chi tiết
+                      </Link>
+                    </div>
                   </div>
                 ))}
               </div>

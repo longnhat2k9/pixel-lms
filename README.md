@@ -245,8 +245,12 @@ nhật — cần bấm nút **"🔄 Chấm lại"**:
   điểm của **bài làm đang xem**.
 - **Ở trang chi tiết một đề thi** (`/teacher/questionbank/[id]`): nút "Chấm lại tất cả bài làm" tính lại
   điểm của **mọi bài làm đã nộp** (cả ca thi lẫn luyện tập) từng dùng đề thi đó.
+- **Ở trang Thi** (`/teacher/exams`), mỗi ca thi có nút **"🔄 Chấm lại ca thi"** — chỉ tính lại điểm các
+  bài làm thuộc **ca thi đó** (không đụng đến bài làm ở ca thi khác hay bài luyện tập dùng chung đề).
+  Mở "Xem bài làm" trong mỗi ca thi cũng có nút **"Xem chi tiết"** cho từng học sinh, dẫn thẳng tới trang
+  chấm bài đầy đủ (`/teacher/submissions/[id]`).
 
-Cả hai đều **giữ nguyên điểm chấm tay đã lưu** (ví dụ điểm tự luận, hoặc điểm bạn từng ghi đè thủ công
+Cả ba đều **giữ nguyên điểm chấm tay đã lưu** (ví dụ điểm tự luận, hoặc điểm bạn từng ghi đè thủ công
 cho một câu trắc nghiệm) — chỉ tính lại phần các câu chưa được chấm tay, dựa trên đáp án đúng **hiện tại**
 trong đề thi. Bài làm đang ở trạng thái "Đang làm" (chưa nộp) sẽ được bỏ qua.
 
