@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Layout from "../../../components/Layout";
 import MarkdownRenderer from "../../../components/MarkdownRenderer";
+import OrderingQuestion from "../../../components/OrderingQuestion";
 import { useUser, apiFetch } from "../../../lib/useUser";
 import { gradeQuestion, fillBlankValues } from "../../../lib/grading";
 
@@ -18,6 +19,7 @@ const TYPE_LABEL = {
   choice2: "2 lựa chọn (Đúng/Sai)",
   choice4: "4 lựa chọn",
   fill_blank: "Điền khuyết",
+  ordering: "Sắp xếp",
   essay: "Tự luận",
   matching: "Nối câu",
 };
@@ -193,6 +195,22 @@ export default function SubmissionDetail() {
                         ))}
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {q.type === "ordering" && (
+                  <div className="mb-3">
+                    {Array.isArray(given) && given.length > 0 ? (
+                      <OrderingQuestion
+                        items={q.data?.items || []}
+                        order={given}
+                        onChange={() => {}}
+                        disabled
+                        showResult
+                      />
+                    ) : (
+                      <div className="bg-panel2 rounded-pixel px-3 py-2 text-sm text-mute">— chưa sắp xếp —</div>
+                    )}
                   </div>
                 )}
 

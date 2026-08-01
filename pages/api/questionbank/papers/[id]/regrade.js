@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
   const { rows: questions } = await DB.questionbank(
-    `SELECT id, type, points, correct_answer FROM questions WHERE paper_id = $1`,
+    `SELECT id, type, points, correct_answer, data FROM questions WHERE paper_id = $1`,
     [id]
   );
 

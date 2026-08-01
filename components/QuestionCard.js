@@ -5,6 +5,7 @@ export const TYPE_LABEL = {
   choice2: "2 lựa chọn (Đúng/Sai)",
   choice4: "4 lựa chọn",
   fill_blank: "Điền khuyết",
+  ordering: "Sắp xếp",
   essay: "Tự luận",
   matching: "Nối câu",
 };
@@ -74,6 +75,23 @@ export default function QuestionCard({ q, label, onEdit, onDelete }) {
           ) : (
             <span className="italic">(chưa nhập)</span>
           )}
+        </div>
+      )}
+
+      {q.type === "ordering" && (
+        <div className="space-y-1.5">
+          {(q.data?.items || []).length === 0 && <span className="text-mute italic text-sm">(chưa có mục nào)</span>}
+          {(q.data?.items || []).map((text, i) => (
+            <div key={i} className="flex items-center gap-2 bg-panel2 rounded-pixel px-3 py-2 text-sm">
+              <span className="shrink-0 w-5 h-5 rounded-full bg-accent2 text-ink flex items-center justify-center text-[11px] font-bold">
+                {i + 1}
+              </span>
+              <span className="min-w-0 flex-1">
+                {text ? <MarkdownRenderer content={text} inline /> : <span className="text-mute italic">(trống)</span>}
+              </span>
+            </div>
+          ))}
+          <div className="text-[11px] text-mute">Đây là thứ tự đúng — học sinh sẽ thấy các mục này bị xáo trộn.</div>
         </div>
       )}
 

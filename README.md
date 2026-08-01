@@ -277,7 +277,27 @@ liệt kê đầy đủ các đáp án được chấp nhận, nối bằng "ho�
 
 ---
 
-## 15. Phát triển local (tùy chọn)
+## 15. Câu hỏi dạng Sắp xếp
+
+Loại câu hỏi mới **"Sắp xếp"** (`ordering`): giáo viên nhập các mục theo **đúng thứ tự từ trên xuống**
+khi soạn câu hỏi (dùng nút ▲▼ để sửa thứ tự lúc soạn nếu gõ nhầm). Khi học sinh làm bài/luyện tập, hệ
+thống **xáo trộn thứ tự hiển thị** — học sinh kéo-thả (hoặc bấm ▲▼ trên mobile) để sắp xếp lại đúng như
+thứ tự giáo viên đã nhập. Chấm đúng/sai toàn bộ (không có điểm từng phần): đúng tuyệt đối thứ tự mới
+được tính điểm.
+
+Vài lưu ý kỹ thuật:
+- Thứ tự xáo trộn hiển thị cho học sinh là **cố định theo từng bài làm** (deterministic theo `attemptId`
+  + `questionId`), nên tải lại trang giữa lúc làm bài không làm các mục nhảy lộn xộn khác đi.
+- Trong lúc học sinh đang làm bài, **thứ tự đúng không bao giờ được gửi về trình duyệt** — chỉ gửi bản
+  đã xáo trộn — nên không thể xem mã nguồn/DevTools để dò đáp án.
+- Sau khi nộp bài, nếu đề đang bật "xem đáp án", màn hình xem lại sẽ tô xanh/đỏ từng vị trí đúng/sai so
+  với thứ tự gốc.
+- Khi in đề, các mục cũng được in theo thứ tự xáo trộn (in ổn định theo `paperId`+`questionId`) kèm ô
+  trống để học sinh ghi số thứ tự đúng; in đáp án thì liệt kê đúng theo thứ tự gốc giáo viên đã nhập.
+
+---
+
+## 16. Phát triển local (tùy chọn)
 
 ```bash
 npm install

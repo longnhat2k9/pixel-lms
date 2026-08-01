@@ -52,7 +52,7 @@ export default async function handler(req, res) {
     }
 
     const { rows: questions } = await DB.questionbank(
-      `SELECT id, type, points, correct_answer FROM questions WHERE paper_id = $1`,
+      `SELECT id, type, points, correct_answer, data FROM questions WHERE paper_id = $1`,
       [attempt.paper_id]
     );
     const { autoScore, finalScore } = computeAttemptScores(questions, attempt.answers || {}, overrides);
@@ -73,7 +73,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Bài làm chưa nộp, không thể chấm lại." });
     }
     const { rows: questions } = await DB.questionbank(
-      `SELECT id, type, points, correct_answer FROM questions WHERE paper_id = $1`,
+      `SELECT id, type, points, correct_answer, data FROM questions WHERE paper_id = $1`,
       [attempt.paper_id]
     );
     const { autoScore, finalScore } = computeAttemptScores(questions, attempt.answers || {}, attempt.manual_overrides || {});

@@ -6,7 +6,7 @@ import { gradeQuestion } from "../../../../lib/grading";
 // essay/matching are left for manual grading via manual_overrides.
 async function autoGrade(paperId, answers) {
   const { rows: questions } = await DB.questionbank(
-    `SELECT id, type, points, correct_answer FROM questions WHERE paper_id = $1`,
+    `SELECT id, type, points, correct_answer, data FROM questions WHERE paper_id = $1`,
     [paperId]
   );
   let total = 0;

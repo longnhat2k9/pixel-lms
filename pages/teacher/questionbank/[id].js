@@ -14,6 +14,7 @@ function emptyForm() {
     options: ["", "", "", ""],
     correctIndex: 0,
     correctTexts: [""],
+    orderItems: ["", ""],
   };
 }
 
@@ -31,6 +32,7 @@ function questionToForm(q) {
     options: q.type === "choice4" ? (q.data?.options || ["", "", "", ""]) : ["", "", "", ""],
     correctIndex: isChoice ? Number(q.correct_answer?.value || 0) : 0,
     correctTexts: q.type === "fill_blank" ? (legacyValues.length ? legacyValues : [""]) : [""],
+    orderItems: q.type === "ordering" ? (q.data?.items?.length ? q.data.items : ["", ""]) : ["", ""],
   };
 }
 
@@ -45,6 +47,8 @@ function buildPayload(form) {
     correct_answer = { value: String(form.correctIndex) };
   } else if (form.type === "fill_blank") {
     correct_answer = { values: (form.correctTexts || []).map((v) => v.trim()).filter((v) => v !== "") };
+  } else if (form.type === "ordering") {
+    data = { items: (form.orderItems || []).map((v) => v.trim()).filter((v) => v !== "") };
   }
   return { type: form.type, content: form.content, points: Number(form.points) || 0, data, correct_answer };
 }
@@ -139,6 +143,63 @@ function QuestionFields({ form, setForm }) {
           >
             + Thêm đáp án đúng khác
           </button>
+        </div>
+      )}
+
+      {form.type === "ordering" && (
+        <div>
+          <label className="text-xs text-mute">Các mục theo đúng thứ tự (từ trên xuống dưới)</label>
+          <div className="space-y-2 mt-1">
+            {form.orderItems.map((text, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-xs text-mute w-5 shrink-0">{i + 1}.</span>
+                <input
+                  className="pxl-input"
+                  placeholder={`Mục thứ ${i + 1}`}
+                  value={text}
+                  onChange={(e) => {
+                    const orderItems = [...form.orderItems];
+                    orderItems[i] = e.target.value;
+                    setForm({ ...form, orderItems });
+                  }}
+                  required={i < 2}
+                />
+                <div className="flex flex-col shrink-0">
+                  <button type="button" className="text-xs text-mute hover:text-accent leading-none px-1"
+                    disabled={i === 0}
+                    onClick={() => {
+                      const orderItems = [...form.orderItems];
+                      [orderItems[i - 1], orderItems[i]] = [orderItems[i], orderItems[i - 1]];
+                      setForm({ ...form, orderItems });
+                    }}>▲</button>
+                  <button type="button" className="text-xs text-mute hover:text-accent leading-none px-1"
+                    disabled={i === form.orderItems.length - 1}
+                    onClick={() => {
+                      const orderItems = [...form.orderItems];
+                      [orderItems[i], orderItems[i + 1]] = [orderItems[i + 1], orderItems[i]];
+                      setForm({ ...form, orderItems });
+                    }}>▼</button>
+                </div>
+                {form.orderItems.length > 2 && (
+                  <button
+                    type="button"
+                    className="text-danger text-xs shrink-0"
+                    onClick={() => setForm({ ...form, orderItems: form.orderItems.filter((_, j) => j !== i) })}
+                  >
+                    Xóa
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="pxl-btn-outline text-xs px-2 py-1 mt-2"
+            onClick={() => setForm({ ...form, orderItems: [...form.orderItems, ""] })}
+          >
+            + Thêm mục
+          </button>
+          <div className="text-xs text-mute mt-2">Học sinh sẽ thấy các mục này bị xáo trộn và phải kéo/nhấn mũi tên để sắp xếp lại đúng thứ tự trên.</div>
         </div>
       )}
 

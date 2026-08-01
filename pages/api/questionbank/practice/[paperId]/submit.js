@@ -1,7 +1,7 @@
 import { DB } from "../../../../../lib/db";
 import { requireRole } from "../../../../../lib/auth";
 import { canPractice } from "../../../../../lib/practiceAccess";
-import { gradeQuestion, matchFillBlank, fillBlankValues } from "../../../../../lib/grading";
+import { gradeQuestion, matchFillBlank, fillBlankValues, isOrderingCorrect } from "../../../../../lib/grading";
 
 // Grades a practice attempt on the spot and returns the breakdown + correct
 // answers immediately. Students can repeat this an unlimited number of
@@ -24,7 +24,7 @@ export default async function handler(req, res) {
   const showAnswers = session.role !== "student" || paperRows[0]?.show_answers !== false;
 
   const { rows: questions } = await DB.questionbank(
-    `SELECT id, type, points, correct_answer FROM questions WHERE paper_id = $1 ORDER BY order_index`,
+    `SELECT id, type, points, correct_answer, data FROM questions WHERE paper_id = $1 ORDER BY order_index`,
     [paperId]
   );
 
@@ -38,6 +38,8 @@ export default async function handler(req, res) {
       isCorrect = given !== undefined && given !== null && String(given) === String(q.correct_answer?.value);
     } else if (q.type === "fill_blank") {
       isCorrect = matchFillBlank(given, q.correct_answer);
+    } else if (q.type === "ordering") {
+      isCorrect = isOrderingCorrect(q, given);
     }
     score += gradeQuestion(q, given);
     if (!showAnswers) {
@@ -46,7 +48,10 @@ export default async function handler(req, res) {
     return {
       questionId: q.id,
       isCorrect,
-      correctAnswer: q.type === "fill_blank" ? fillBlankValues(q.correct_answer) : (q.correct_answer?.value ?? null),
+      correctAnswer:
+        q.type === "fill_blank" ? fillBlankValues(q.correct_answer)
+        : q.type === "ordering" ? (q.data?.items || [])
+        : (q.correct_answer?.value ?? null),
       points: Number(q.points),
     };
   });

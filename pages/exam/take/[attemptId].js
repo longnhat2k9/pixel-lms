@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { useUser, apiFetch } from "../../../lib/useUser";
 import MarkdownRenderer from "../../../components/MarkdownRenderer";
+import OrderingQuestion from "../../../components/OrderingQuestion";
 import { matchFillBlank, fillBlankValues } from "../../../lib/grading";
 
 function useCountdown(deadline, onExpire) {
@@ -49,7 +50,13 @@ export default function ExamTake() {
       const d = await apiFetch(`/api/exams/attempt-questions/${attemptId}`);
       setAttempt(d.attempt);
       setQuestions(d.questions);
-      setAnswers(d.attempt.answers || {});
+      const initAnswers = { ...(d.attempt.answers || {}) };
+      for (const q of d.questions) {
+        if (q.type === "ordering" && !initAnswers[q.id]) {
+          initAnswers[q.id] = (q.data?.items || []).map((it) => it.id);
+        }
+      }
+      setAnswers(initAnswers);
       setShowAnswers(!!d.showAnswers);
     } catch (e) { setError(e.message); }
   }
@@ -193,6 +200,16 @@ export default function ExamTake() {
                     </div>
                   )}
                 </div>
+              )}
+
+              {q.type === "ordering" && (
+                <OrderingQuestion
+                  items={q.data?.items || []}
+                  order={given || (q.data?.items || []).map((it) => it.id)}
+                  onChange={(next) => setAnswer(q.id, next)}
+                  disabled={finished}
+                  showResult={hasAnswerKey}
+                />
               )}
 
               {(q.type === "essay" || q.type === "matching") && (

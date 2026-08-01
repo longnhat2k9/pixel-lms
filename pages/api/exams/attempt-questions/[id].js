@@ -1,5 +1,6 @@
 import { DB } from "../../../../lib/db";
 import { requireRole } from "../../../../lib/auth";
+import { buildOrderingData } from "../../../../lib/shuffle";
 
 // Returns the attempt plus its questions. Teachers/admins always get the
 // correct_answer field (for grading). Students only get it once the attempt
@@ -25,11 +26,20 @@ export default async function handler(req, res) {
     includeAnswers = paperRows[0]?.show_answers !== false;
   }
 
-  const { rows: questions } = await DB.questionbank(
+  const { rows: rawQuestions } = await DB.questionbank(
     `SELECT id, type, content, points, order_index, data${includeAnswers ? ", correct_answer" : ""}
      FROM questions WHERE paper_id = $1 ORDER BY order_index`,
     [attempt.paper_id]
   );
+
+  // Ordering questions: never reveal the true (correct) sequence to a
+  // student who hasn't earned the right to see it — scramble deterministically
+  // per attempt+question so reloading the exam doesn't reshuffle mid-attempt.
+  const questions = rawQuestions.map((q) => {
+    if (q.type !== "ordering") return q;
+    const items = q.data?.items || [];
+    return { ...q, data: buildOrderingData(items, `${attempt.id}-${q.id}`, includeAnswers) };
+  });
 
   res.status(200).json({ attempt, questions, showAnswers: includeAnswers });
 }

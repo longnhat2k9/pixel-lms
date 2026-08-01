@@ -1,5 +1,6 @@
 import MarkdownRenderer from "./MarkdownRenderer";
 import { fillBlankValues } from "../lib/grading";
+import { seededShuffle } from "../lib/shuffle";
 
 const LETTERS = ["A", "B", "C", "D"];
 const today = () => new Date().toLocaleDateString("vi-VN");
@@ -9,31 +10,46 @@ export function ExamPaperDoc({ paper, questions }) {
     <div>
       <div className="doc-title">{paper.title}</div>
       <div className="doc-meta">Đề thi · {questions.length} câu · Họ tên thí sinh: ______________________ · Ngày in: {today()}</div>
-      {questions.map((q, idx) => (
-        <div className="question" key={q.id}>
-          <div className="stem">
-            <span className="qnum">Câu {idx + 1}.</span>
-            <MarkdownRenderer content={q.content} inline />{" "}
-            <span className="pts">({q.points} điểm)</span>
-          </div>
-
-          {(q.type === "choice2" || q.type === "choice4") && (
-            <div className={`options ${q.type === "choice2" ? "single-col" : ""}`}>
-              {(q.data?.options || []).map((o, i) => (
-                <div className="option" key={i}>
-                  <span className="letter">{q.type === "choice4" ? LETTERS[i] : i === 0 ? "Đ" : "S"}</span>
-                  <span><MarkdownRenderer content={o} inline /></span>
-                </div>
-              ))}
+      {questions.map((q, idx) => {
+        const orderItems = q.type === "ordering" ? (q.data?.items || []) : [];
+        const shuffledIdx = orderItems.length ? seededShuffle(orderItems.map((_, i) => i), `${paper.id}-${q.id}`) : [];
+        return (
+          <div className="question" key={q.id}>
+            <div className="stem">
+              <span className="qnum">Câu {idx + 1}.</span>
+              <MarkdownRenderer content={q.content} inline />{" "}
+              <span className="pts">({q.points} điểm)</span>
             </div>
-          )}
 
-          {q.type === "fill_blank" && <div className="blank-line">Trả lời: ______________________________</div>}
-          {(q.type === "essay" || q.type === "matching") && (
-            <div className="blank-line">Trả lời: ______________________________________________________</div>
-          )}
-        </div>
-      ))}
+            {(q.type === "choice2" || q.type === "choice4") && (
+              <div className={`options ${q.type === "choice2" ? "single-col" : ""}`}>
+                {(q.data?.options || []).map((o, i) => (
+                  <div className="option" key={i}>
+                    <span className="letter">{q.type === "choice4" ? LETTERS[i] : i === 0 ? "Đ" : "S"}</span>
+                    <span><MarkdownRenderer content={o} inline /></span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {q.type === "fill_blank" && <div className="blank-line">Trả lời: ______________________________</div>}
+            {q.type === "ordering" && (
+              <div className="options single-col">
+                {shuffledIdx.map((origIdx) => (
+                  <div className="option" key={origIdx}>
+                    <span className="letter">__</span>
+                    <span><MarkdownRenderer content={orderItems[origIdx]} inline /></span>
+                  </div>
+                ))}
+                <div className="blank-line">(Ghi số thứ tự đúng 1, 2, 3... vào ô trống cạnh mỗi mục)</div>
+              </div>
+            )}
+            {(q.type === "essay" || q.type === "matching") && (
+              <div className="blank-line">Trả lời: ______________________________________________________</div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -65,6 +81,15 @@ export function AnswerKeyDoc({ paper, questions }) {
                       <span key={i}>
                         {i > 0 && " hoặc "}
                         <MarkdownRenderer content={v} inline />
+                      </span>
+                    ))}
+                  </span>
+                )}
+                {q.type === "ordering" && (
+                  <span>
+                    {(q.data?.items || []).map((text, i) => (
+                      <span key={i} style={{ display: "block" }}>
+                        {i + 1}. <MarkdownRenderer content={text} inline />
                       </span>
                     ))}
                   </span>

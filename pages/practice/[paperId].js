@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Layout from "../../components/Layout";
 import MarkdownRenderer from "../../components/MarkdownRenderer";
+import OrderingQuestion from "../../components/OrderingQuestion";
 import { useUser, apiFetch } from "../../lib/useUser";
 
 function fmt(ms) {
@@ -10,6 +11,14 @@ function fmt(ms) {
   const m = Math.floor(s / 60);
   const sec = s % 60;
   return `${m}:${String(sec).padStart(2, "0")}`;
+}
+
+function defaultOrderingAnswers(questions) {
+  const init = {};
+  for (const q of questions) {
+    if (q.type === "ordering") init[q.id] = (q.data?.items || []).map((it) => it.id);
+  }
+  return init;
 }
 
 export default function PracticePaper() {
@@ -33,6 +42,7 @@ export default function PracticePaper() {
       const d = await apiFetch(`/api/questionbank/practice/${paperId}`);
       setPaper(d.paper);
       setQuestions(d.questions);
+      setAnswers(defaultOrderingAnswers(d.questions));
       setDeadline(minutes ? Date.now() + minutes * 60000 : null);
     } catch (e) { setError(e.message); }
   }
@@ -73,7 +83,7 @@ export default function PracticePaper() {
   }
 
   function retry() {
-    setAnswers({});
+    setAnswers(defaultOrderingAnswers(questions));
     setResult(null);
     setDeadline(isTimed ? Date.now() + minutes * 60000 : null);
   }
@@ -177,6 +187,16 @@ export default function PracticePaper() {
                         </div>
                       )}
                     </div>
+                  )}
+
+                  {q.type === "ordering" && (
+                    <OrderingQuestion
+                      items={q.data?.items || []}
+                      order={answers[q.id] || (q.data?.items || []).map((it) => it.id)}
+                      onChange={(next) => setAnswer(q.id, next)}
+                      disabled={locked}
+                      showResult={!!b && b.isCorrect !== null}
+                    />
                   )}
 
                   {(q.type === "essay" || q.type === "matching") && (
