@@ -66,22 +66,25 @@ export default function ExamTake() {
 
   useEffect(() => { if (user && attemptId) load(); }, [user, attemptId]);
 
-  // Poll every 8s while in progress — if a teacher cancels or force-ends the
-  // attempt from the monitoring screen, this catches it quickly instead of
-  // letting the student keep typing into an attempt that's already over
-  // (autosave would otherwise just fail silently in the background).
+  // Poll every 3s while in progress so the countdown/lock state reacts in
+  // near real-time to teacher actions (+5/-5 phút, kết thúc, hủy) — always
+  // refresh the whole attempt (not just on status change), since a time
+  // adjustment alone doesn't change status but must still move the deadline.
   useEffect(() => {
     if (!attempt || attempt.status !== "in_progress") return;
-    const poll = setInterval(async () => {
+    let cancelled = false;
+    async function check() {
       try {
         const d = await apiFetch(`/api/submissions/${attemptId}`);
-        if (d.attempt.status !== "in_progress") setAttempt(d.attempt);
+        if (!cancelled) setAttempt(d.attempt);
       } catch {
         // ignore transient network errors, next poll will retry
       }
-    }, 8000);
-    return () => clearInterval(poll);
-  }, [attempt, attemptId]);
+    }
+    check(); // immediate check, don't wait for the first interval tick
+    const poll = setInterval(check, 3000);
+    return () => { cancelled = true; clearInterval(poll); };
+  }, [attempt?.status, attemptId]);
 
   // autosave every 10s while in progress
   useEffect(() => {

@@ -308,12 +308,19 @@ Trước đây, nếu giáo viên bấm "Hủy" hoặc "Kết thúc" một bài 
 gõ bài trên máy của họ (màn hình không tự cập nhật), và nếu ca thi cho phép làm nhiều lần thì họ còn có
 thể nhập lại mã để tạo một lượt làm bài **mới**. Đã sửa cả hai:
 
-- Màn hình làm bài giờ **tự kiểm tra trạng thái mỗi 8 giây** trong lúc đang làm — ngay khi giáo viên hủy
+- Màn hình làm bài giờ **tự kiểm tra trạng thái mỗi 3 giây** trong lúc đang làm — ngay khi giáo viên hủy
   hoặc buộc kết thúc, màn hình học sinh khóa lại gần như ngay lập tức, hiện rõ thông báo lý do, không thể
-  gõ tiếp hay nộp bài.
+  gõ tiếp hay nộp bài. Bấm **"+5 phút" / "-5 phút"** từ phía giáo viên cũng cập nhật đồng hồ đếm ngược
+  của học sinh trong tối đa 3 giây — không cần học sinh tải lại trang.
 - Bài làm đã bị **hủy** hoặc **buộc kết thúc** thì **không cho nhập lại mã để làm lại nữa**, bất kể ca
   thi có bật "cho làm nhiều lần" hay không — vì đó là quyết định của giáo viên, không phải học sinh hoàn
   thành bình thường. Chỉ bài làm ở trạng thái "Đã nộp" bình thường mới được làm lại khi ca thi cho phép.
+
+> **Lưu ý về tải hệ thống:** Vercel serverless không hỗ trợ WebSocket bền vững, nên việc cập nhật
+> "gần như real-time" này dùng polling (hỏi lại server mỗi 3 giây) — cùng cách tiếp cận với hệ thống
+> Ban/Pick AOV trước đây. Với lớp thi rất đông cùng lúc, có thể cần tăng khoảng cách polling lên (sửa
+> hằng số `3000` trong `pages/exam/take/[attemptId].js`) hoặc nâng giới hạn connection pool (`max: 3`
+> mỗi DB trong `lib/db.js`) nếu Neon báo hết connection.
 
 ---
 
