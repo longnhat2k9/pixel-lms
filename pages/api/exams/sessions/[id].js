@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "PUT") {
-    const { title, timeLimitMinutes, startTime, endTime, status, allowMultipleAttempts } = req.body || {};
+    const { title, timeLimitMinutes, startTime, endTime, status, allowMultipleAttempts, notes } = req.body || {};
     const { rows } = await DB.exams(
       `UPDATE sessions SET
         title = COALESCE($1,title),
@@ -25,9 +25,10 @@ export default async function handler(req, res) {
         start_time = COALESCE($3,start_time),
         end_time = COALESCE($4,end_time),
         status = COALESCE($5,status),
-        allow_multiple_attempts = COALESCE($6,allow_multiple_attempts)
-       WHERE id = $7 RETURNING *`,
-      [title, timeLimitMinutes, startTime, endTime, status, allowMultipleAttempts, id]
+        allow_multiple_attempts = COALESCE($6,allow_multiple_attempts),
+        notes = COALESCE($7,notes)
+       WHERE id = $8 RETURNING *`,
+      [title, timeLimitMinutes, startTime, endTime, status, allowMultipleAttempts, notes, id]
     );
     return res.status(200).json({ session: rows[0] });
   }

@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
   const { code } = req.query;
   const { rows } = await DB.exams(
-    `SELECT id, session_code, title, status, start_time, end_time FROM sessions WHERE session_code = $1`,
+    `SELECT id, session_code, title, status, start_time, end_time, notes FROM sessions WHERE session_code = $1`,
     [String(code).trim().toUpperCase()]
   );
   if (!rows[0]) return res.status(404).json({ error: "Mã ca thi không tồn tại." });

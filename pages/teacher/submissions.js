@@ -58,6 +58,7 @@ export default function SubmissionsPage() {
               <span className="text-sm">Điểm: {a.final_score ?? "—"}</span>
               {a.status === "in_progress" && (
                 <>
+                  <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => action(a.id, "adjust_time", -5)}>-5 phút</button>
                   <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => action(a.id, "adjust_time", 5)}>+5 phút</button>
                   <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => action(a.id, "force_end")}>Kết thúc</button>
                   <button className="pxl-btn-danger text-xs px-2 py-1" onClick={() => action(a.id, "cancel")}>Hủy</button>

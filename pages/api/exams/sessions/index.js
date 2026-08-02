@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    const { title, paperId, timeLimitMinutes, startTime, endTime, allowMultipleAttempts } = req.body || {};
+    const { title, paperId, timeLimitMinutes, startTime, endTime, allowMultipleAttempts, notes } = req.body || {};
     if (!title || !paperId) return res.status(400).json({ error: "Thiếu tên ca thi hoặc đề thi." });
 
     const { rows: paperRows } = await DB.questionbank(`SELECT id FROM papers WHERE id = $1`, [paperId]);
@@ -30,11 +30,11 @@ export default async function handler(req, res) {
 
     const { rows } = await DB.exams(
       `INSERT INTO sessions (session_code, title, paper_id, time_limit_minutes, start_time, end_time,
-        allow_multiple_attempts, status, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,'scheduled',$8) RETURNING *`,
+        allow_multiple_attempts, notes, status, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'scheduled',$9) RETURNING *`,
       [
         code, title, paperId, timeLimitMinutes || 60,
-        startTime || null, endTime || null, !!allowMultipleAttempts, session.id,
+        startTime || null, endTime || null, !!allowMultipleAttempts, notes || null, session.id,
       ]
     );
     return res.status(201).json({ session: rows[0] });

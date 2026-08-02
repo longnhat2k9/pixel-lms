@@ -41,5 +41,11 @@ export default async function handler(req, res) {
     return { ...q, data: buildOrderingData(items, `${attempt.id}-${q.id}`, includeAnswers) };
   });
 
-  res.status(200).json({ attempt, questions, showAnswers: includeAnswers });
+  let sessionNotes = null;
+  if (attempt.session_id) {
+    const { rows: sessRows } = await DB.exams(`SELECT notes FROM sessions WHERE id = $1`, [attempt.session_id]);
+    sessionNotes = sessRows[0]?.notes || null;
+  }
+
+  res.status(200).json({ attempt, questions, showAnswers: includeAnswers, sessionNotes });
 }

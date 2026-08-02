@@ -14,12 +14,14 @@ export default function ExamsPage() {
   const user = useUser(["admin", "teacher"]);
   const [sessions, setSessions] = useState([]);
   const [papers, setPapers] = useState([]);
-  const [form, setForm] = useState({ title: "", paperId: "", timeLimitMinutes: 60, allowMultipleAttempts: false });
+  const [form, setForm] = useState({ title: "", paperId: "", timeLimitMinutes: 60, allowMultipleAttempts: false, notes: "" });
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState(null);
   const [detail, setDetail] = useState(null);
   const [selected, setSelected] = useState(new Set());
   const [regradeMsg, setRegradeMsg] = useState({});
+  const [editingNotesId, setEditingNotesId] = useState(null);
+  const [notesDraft, setNotesDraft] = useState("");
 
   async function load() {
     try {
@@ -38,7 +40,20 @@ export default function ExamsPage() {
     if (!form.paperId) return setError("Chọn đề thi.");
     try {
       await apiFetch("/api/exams/sessions", { method: "POST", body: JSON.stringify(form) });
-      setForm({ title: "", paperId: "", timeLimitMinutes: 60, allowMultipleAttempts: false });
+      setForm({ title: "", paperId: "", timeLimitMinutes: 60, allowMultipleAttempts: false, notes: "" });
+      load();
+    } catch (e) { setError(e.message); }
+  }
+
+  function startEditNotes(s) {
+    setEditingNotesId(s.id);
+    setNotesDraft(s.notes || "");
+  }
+
+  async function saveNotes(sessionId) {
+    try {
+      await apiFetch(`/api/exams/sessions/${sessionId}`, { method: "PUT", body: JSON.stringify({ notes: notesDraft }) });
+      setEditingNotesId(null);
       load();
     } catch (e) { setError(e.message); }
   }
@@ -106,24 +121,39 @@ export default function ExamsPage() {
       <p className="text-mute mb-6 text-sm">Tạo ca thi từ đề thi có sẵn. Học sinh chỉ cần nhập mã ca thi. Tick chọn ca thi để in.</p>
       {error && <div className="mb-4 text-sm text-danger">{error}</div>}
 
-      <form onSubmit={create} className="pxl-card p-5 mb-8 grid md:grid-cols-4 gap-3 items-end">
-        <div>
-          <label className="text-xs text-mute">Tên ca thi</label>
-          <input className="pxl-input mt-1" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+      <form onSubmit={create} className="pxl-card p-5 mb-8 space-y-3">
+        <div className="grid md:grid-cols-4 gap-3 items-end">
+          <div>
+            <label className="text-xs text-mute">Tên ca thi</label>
+            <input className="pxl-input mt-1" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+          </div>
+          <div>
+            <label className="text-xs text-mute">Đề thi</label>
+            <select className="pxl-input mt-1" value={form.paperId} onChange={(e) => setForm({ ...form, paperId: e.target.value })} required>
+              <option value="">-- Chọn đề --</option>
+              {papers.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-mute">Thời gian (phút)</label>
+            <input type="number" className="pxl-input mt-1" value={form.timeLimitMinutes}
+              onChange={(e) => setForm({ ...form, timeLimitMinutes: Number(e.target.value) })} />
+          </div>
+          <button className="pxl-btn h-[38px]">+ Tạo ca thi</button>
         </div>
         <div>
-          <label className="text-xs text-mute">Đề thi</label>
-          <select className="pxl-input mt-1" value={form.paperId} onChange={(e) => setForm({ ...form, paperId: e.target.value })} required>
-            <option value="">-- Chọn đề --</option>
-            {papers.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-          </select>
+          <label className="text-xs text-mute">Lưu ý ca thi (tùy chọn)</label>
+          <textarea
+            className="pxl-input mt-1 text-sm"
+            rows={2}
+            placeholder="Ví dụ: Mang theo giấy nháp, không dùng máy tính, thời gian nộp muộn nhất là..."
+            value={form.notes}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          />
+          <div className="text-xs text-mute mt-1">
+            Hiện cho học sinh xem ở phòng chờ (trước khi ca thi mở) và ở đầu màn hình làm bài.
+          </div>
         </div>
-        <div>
-          <label className="text-xs text-mute">Thời gian (phút)</label>
-          <input type="number" className="pxl-input mt-1" value={form.timeLimitMinutes}
-            onChange={(e) => setForm({ ...form, timeLimitMinutes: Number(e.target.value) })} />
-        </div>
-        <button className="pxl-btn h-[38px]">+ Tạo ca thi</button>
       </form>
 
       <div className="space-y-3">
@@ -149,11 +179,37 @@ export default function ExamsPage() {
                 {s.status !== "active" && <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => setStatus(s, "active")}>Mở ca thi</button>}
                 {s.status !== "ended" && <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => setStatus(s, "ended")}>Đóng ca thi</button>}
                 <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => regradeSession(s)}>🔄 Chấm lại ca thi</button>
+                <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => (editingNotesId === s.id ? setEditingNotesId(null) : startEditNotes(s))}>
+                  📋 {s.notes ? "Sửa lưu ý" : "Thêm lưu ý"}
+                </button>
                 <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => toggle(s)}>
                   {expanded === s.id ? "Ẩn" : "Xem bài làm"}
                 </button>
               </div>
             </div>
+
+            {editingNotesId === s.id ? (
+              <div className="mt-3 pt-3 border-t border-line space-y-2">
+                <textarea
+                  className="pxl-input text-sm"
+                  rows={3}
+                  value={notesDraft}
+                  onChange={(e) => setNotesDraft(e.target.value)}
+                  placeholder="Ví dụ: Mang theo giấy nháp, không dùng máy tính..."
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <button className="pxl-btn text-xs px-3 py-1.5" onClick={() => saveNotes(s.id)}>Lưu</button>
+                  <button className="pxl-btn-outline text-xs px-3 py-1.5" onClick={() => setEditingNotesId(null)}>Hủy</button>
+                </div>
+              </div>
+            ) : (
+              s.notes && (
+                <div className="mt-3 pt-3 border-t border-line text-sm text-gray-300 whitespace-pre-line">
+                  📋 {s.notes}
+                </div>
+              )
+            )}
 
             {regradeMsg[s.id] && <div className="text-xs text-accent2 mt-2">{regradeMsg[s.id]}</div>}
 
@@ -169,6 +225,7 @@ export default function ExamsPage() {
                     <div className="flex gap-2 shrink-0">
                       {a.status === "in_progress" && (
                         <>
+                          <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => attemptAction(a.id, "adjust_time", -5)}>-5 phút</button>
                           <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => attemptAction(a.id, "adjust_time", 5)}>+5 phút</button>
                           <button className="pxl-btn-outline text-xs px-2 py-1" onClick={() => attemptAction(a.id, "force_end")}>Kết thúc</button>
                           <button className="pxl-btn-danger text-xs px-2 py-1" onClick={() => attemptAction(a.id, "cancel")}>Hủy bài</button>

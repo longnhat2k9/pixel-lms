@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
+import Head from "next/head";
 import { useUser, apiFetch } from "../../../lib/useUser";
 import MarkdownRenderer from "../../../components/MarkdownRenderer";
 import OrderingQuestion from "../../../components/OrderingQuestion";
@@ -41,6 +42,7 @@ export default function ExamTake() {
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [showAnswers, setShowAnswers] = useState(false);
+  const [sessionNotes, setSessionNotes] = useState(null);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const dirty = useRef(false);
@@ -58,17 +60,40 @@ export default function ExamTake() {
       }
       setAnswers(initAnswers);
       setShowAnswers(!!d.showAnswers);
+      setSessionNotes(d.sessionNotes || null);
     } catch (e) { setError(e.message); }
   }
 
   useEffect(() => { if (user && attemptId) load(); }, [user, attemptId]);
+
+  // Poll every 8s while in progress — if a teacher cancels or force-ends the
+  // attempt from the monitoring screen, this catches it quickly instead of
+  // letting the student keep typing into an attempt that's already over
+  // (autosave would otherwise just fail silently in the background).
+  useEffect(() => {
+    if (!attempt || attempt.status !== "in_progress") return;
+    const poll = setInterval(async () => {
+      try {
+        const d = await apiFetch(`/api/submissions/${attemptId}`);
+        if (d.attempt.status !== "in_progress") setAttempt(d.attempt);
+      } catch {
+        // ignore transient network errors, next poll will retry
+      }
+    }, 8000);
+    return () => clearInterval(poll);
+  }, [attempt, attemptId]);
 
   // autosave every 10s while in progress
   useEffect(() => {
     if (!attempt || attempt.status !== "in_progress") return;
     const id = setInterval(() => {
       if (dirty.current) {
-        apiFetch(`/api/submissions/${attemptId}`, { method: "PUT", body: JSON.stringify({ answers }) }).catch(() => {});
+        apiFetch(`/api/submissions/${attemptId}`, { method: "PUT", body: JSON.stringify({ answers }) })
+          .catch(() => {
+            // likely means the attempt was cancelled/force-ended server-side —
+            // refresh right away instead of waiting for the next status poll
+            apiFetch(`/api/submissions/${attemptId}`).then((d) => setAttempt(d.attempt)).catch(() => {});
+          });
         dirty.current = false;
       }
     }, 10000);
@@ -110,6 +135,9 @@ export default function ExamTake() {
 
   return (
     <div className="min-h-screen bg-ink text-gray-100">
+      <Head>
+        <title>{attempt.exam_title_snapshot} · Pixel LMS</title>
+      </Head>
       <div className="sticky top-0 bg-panel border-b border-line z-10">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
@@ -118,6 +146,10 @@ export default function ExamTake() {
           </div>
           {!finished ? (
             <div className={`font-mono text-xl ${remaining < 60000 ? "text-danger" : "text-accent"}`}>{fmt(remaining)}</div>
+          ) : attempt.status === "cancelled" ? (
+            <div className="pxl-badge bg-danger/20 text-danger">Đã bị hủy bởi giáo viên</div>
+          ) : attempt.status === "force_ended" ? (
+            <div className="pxl-badge bg-danger/20 text-danger">Bị buộc kết thúc bởi giáo viên</div>
           ) : (
             <div className="pxl-badge bg-accent2/20 text-accent2">Đã nộp bài</div>
           )}
@@ -125,6 +157,22 @@ export default function ExamTake() {
       </div>
 
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-5">
+        {sessionNotes && (
+          <div className="pxl-card p-5 border border-warn/40 bg-warn/5">
+            <div className="text-sm font-semibold text-warn mb-2">📋 Lưu ý ca thi</div>
+            <MarkdownRenderer content={sessionNotes} className="text-sm text-gray-200" />
+          </div>
+        )}
+
+        {(attempt.status === "cancelled" || attempt.status === "force_ended") && (
+          <div className="pxl-card p-5 border border-danger/40 bg-danger/10">
+            <div className="text-sm font-medium text-danger">
+              {attempt.status === "cancelled" ? "Bài làm này đã bị giáo viên hủy." : "Bài làm này đã bị giáo viên buộc kết thúc."}
+            </div>
+            <div className="text-xs text-mute mt-1">Bạn không thể tiếp tục chỉnh sửa hay nộp lại. Liên hệ giáo viên nếu cần hỗ trợ.</div>
+          </div>
+        )}
+
         {finished && (
           <div className="pxl-card p-5">
             <div className="text-sm text-mute">Điểm số</div>

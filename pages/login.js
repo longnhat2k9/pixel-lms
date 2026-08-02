@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import Head from "next/head";
 import { dashboardPath } from "../lib/useUser";
 
 export default function Login() {
@@ -47,6 +48,9 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-ink">
+      <Head>
+        <title>Đăng nhập · Pixel LMS</title>
+      </Head>
       <form onSubmit={submit} className="pxl-card w-full max-w-sm p-8">
         <Link href="/" className="text-2xl font-bold mb-1 block hover:text-accent">Pixel LMS</Link>
         <div className="text-mute text-sm mb-6">Đăng nhập để tiếp tục</div>

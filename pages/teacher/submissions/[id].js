@@ -121,6 +121,7 @@ export default function SubmissionDetail() {
           <div className="flex gap-2">
             {attempt.status === "in_progress" && (
               <>
+                <button className="pxl-btn-outline text-xs px-3 py-1.5" onClick={() => action("adjust_time", -5)}>-5 phút</button>
                 <button className="pxl-btn-outline text-xs px-3 py-1.5" onClick={() => action("adjust_time", 5)}>+5 phút</button>
                 <button className="pxl-btn-outline text-xs px-3 py-1.5" onClick={() => action("force_end")}>Kết thúc</button>
                 <button className="pxl-btn-danger text-xs px-3 py-1.5" onClick={() => action("cancel")}>Hủy bài</button>

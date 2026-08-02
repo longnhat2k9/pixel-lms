@@ -189,6 +189,7 @@ export default async function handler(req, res) {
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
     `);
+    await DB.exams(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS notes TEXT;`);
     results.exams = "ok";
   } catch (e) {
     results.exams = `ERROR: ${e.message}`;

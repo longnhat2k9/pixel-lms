@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Layout from "../../../components/Layout";
+import MarkdownRenderer from "../../../components/MarkdownRenderer";
 import { useUser, apiFetch } from "../../../lib/useUser";
 
 const POLL_MS = 3000;
@@ -69,6 +70,13 @@ export default function ExamWaitingRoom() {
             </>
           )}
         </div>
+
+        {!error && session?.notes && (
+          <div className="pxl-card p-6 mt-4 text-left border border-warn/40 bg-warn/5">
+            <div className="text-sm font-semibold text-warn mb-2">📋 Lưu ý ca thi</div>
+            <MarkdownRenderer content={session.notes} className="text-sm text-gray-200" />
+          </div>
+        )}
       </div>
     </Layout>
   );

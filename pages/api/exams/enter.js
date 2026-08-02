@@ -47,6 +47,12 @@ export default async function handler(req, res) {
     if (existing[0].status === "in_progress") {
       return res.status(200).json({ attemptId: existing[0].id });
     }
+    if (existing[0].status === "cancelled") {
+      return res.status(400).json({ error: "Bài làm trước của bạn đã bị giáo viên hủy. Vui lòng liên hệ giáo viên nếu cần làm lại." });
+    }
+    if (existing[0].status === "force_ended") {
+      return res.status(400).json({ error: "Bài làm trước của bạn đã bị giáo viên buộc kết thúc. Vui lòng liên hệ giáo viên nếu cần làm lại." });
+    }
     if (!examSession.allow_multiple_attempts) {
       return res.status(400).json({ error: "Bạn đã hoàn thành ca thi này." });
     }

@@ -80,8 +80,9 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 > `lesson_practice_links` vào DB Khóa học, đồng thời nới lỏng ràng buộc `session_id` và thêm cột
 > `kind` vào bảng `attempts` (DB Bài làm) để lưu kết quả luyện tập như một bài làm, và thêm cột
 > `show_answers` vào bảng `papers` (DB Đề thi) cho tính năng bật/tắt xem đáp án, và cột
-> `time_limit_minutes` vào bảng `lesson_practice_links` để đặt giờ luyện tập riêng cho từng đề. Việc
-> gọi lại hoàn toàn an toàn, không xóa dữ liệu cũ.
+> `time_limit_minutes` vào bảng `lesson_practice_links` để đặt giờ luyện tập riêng cho từng đề, và cột
+> `notes` vào bảng `sessions` (DB Thi) cho tính năng "Lưu ý ca thi". Việc gọi lại hoàn toàn an toàn,
+> không xóa dữ liệu cũ.
 
 Sau khi deploy xong, mở trình duyệt và truy cập:
 
@@ -301,7 +302,52 @@ Vài lưu ý kỹ thuật:
 
 ---
 
-## 16. Phát triển local (tùy chọn)
+## 16. Sửa lỗi hủy/kết thúc bài thi
+
+Trước đây, nếu giáo viên bấm "Hủy" hoặc "Kết thúc" một bài làm đang thi, học sinh vẫn có thể tiếp tục
+gõ bài trên máy của họ (màn hình không tự cập nhật), và nếu ca thi cho phép làm nhiều lần thì họ còn có
+thể nhập lại mã để tạo một lượt làm bài **mới**. Đã sửa cả hai:
+
+- Màn hình làm bài giờ **tự kiểm tra trạng thái mỗi 8 giây** trong lúc đang làm — ngay khi giáo viên hủy
+  hoặc buộc kết thúc, màn hình học sinh khóa lại gần như ngay lập tức, hiện rõ thông báo lý do, không thể
+  gõ tiếp hay nộp bài.
+- Bài làm đã bị **hủy** hoặc **buộc kết thúc** thì **không cho nhập lại mã để làm lại nữa**, bất kể ca
+  thi có bật "cho làm nhiều lần" hay không — vì đó là quyết định của giáo viên, không phải học sinh hoàn
+  thành bình thường. Chỉ bài làm ở trạng thái "Đã nộp" bình thường mới được làm lại khi ca thi cho phép.
+
+---
+
+## 17. Nút -5 phút
+
+Ở mọi nơi có nút "+5 phút" để gia hạn thời gian bài làm (trang Thi, trang Bài làm, trang chi tiết một bài
+làm), giờ có thêm nút **"-5 phút"** ngay cạnh để rút ngắn thời gian khi cần (ví dụ phát hiện gian lận,
+hoặc lỡ gia hạn quá tay).
+
+---
+
+## 18. Lưu ý ca thi
+
+Khi tạo ca thi (trang Thi), có thêm ô **"Lưu ý ca thi"** (tùy chọn, hỗ trợ Markdown). Ca thi đã tạo cũng
+sửa lại được lưu ý này bất cứ lúc nào qua nút "📋 Thêm lưu ý" / "📋 Sửa lưu ý". Lưu ý này hiển thị ở 2 nơi:
+
+- **Phòng chờ** (`/exam/waiting/[code]`): học sinh đang chờ ca thi mở sẽ thấy khung lưu ý riêng bên dưới
+  màn hình đếm chờ.
+- **Đầu màn hình làm bài** (`/exam/take/[attemptId]`): một khung riêng màu vàng nhạt nằm trên cùng, trước
+  cả câu hỏi đầu tiên, để học sinh đọc trước khi bắt đầu làm.
+
+Không áp dụng cho luyện tập tự do (không gắn với ca thi nào nên không có lưu ý).
+
+---
+
+## 19. Tên tab trình duyệt
+
+Trước đây các trang không đặt `<title>`, nên tab trình duyệt hiện trống hoặc chỉ hiện đường dẫn. Đã thêm
+tiêu đề mặc định **"Pixel LMS"** cho toàn bộ hệ thống, và tiêu đề riêng cho vài trang hay mở nhiều tab
+cùng lúc (trang đăng nhập, trang làm bài thi — hiện luôn tên ca thi để dễ phân biệt giữa các tab).
+
+---
+
+## 20. Phát triển local (tùy chọn)
 
 ```bash
 npm install
