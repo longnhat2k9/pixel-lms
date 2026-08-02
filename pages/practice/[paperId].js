@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Layout from "../../components/Layout";
 import MarkdownRenderer from "../../components/MarkdownRenderer";
 import OrderingQuestion from "../../components/OrderingQuestion";
+import GroupingQuestion from "../../components/GroupingQuestion";
 import { useUser, apiFetch } from "../../lib/useUser";
 
 function fmt(ms) {
@@ -196,6 +197,22 @@ export default function PracticePaper() {
                       onChange={(next) => setAnswer(q.id, next)}
                       disabled={locked}
                       showResult={!!b && b.isCorrect !== null}
+                    />
+                  )}
+
+                  {q.type === "grouping" && (
+                    <GroupingQuestion
+                      columns={q.data?.columns || []}
+                      items={q.data?.items || []}
+                      assignment={answers[q.id] || {}}
+                      onChange={(next) => setAnswer(q.id, next)}
+                      disabled={locked}
+                      showResult={!!b && b.isCorrect !== null}
+                      correctByItem={
+                        b?.correctAnswer?.items
+                          ? Object.fromEntries(b.correctAnswer.items.map((it) => [it.id, it.columnIndex]))
+                          : {}
+                      }
                     />
                   )}
 

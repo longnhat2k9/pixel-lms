@@ -164,7 +164,7 @@ export default async function handler(req, res) {
     await DB.questionbank(`ALTER TABLE questions DROP CONSTRAINT IF EXISTS questions_type_check;`);
     await DB.questionbank(`
       ALTER TABLE questions ADD CONSTRAINT questions_type_check
-        CHECK (type IN ('choice2','choice4','fill_blank','ordering','essay','matching'));
+        CHECK (type IN ('choice2','choice4','fill_blank','ordering','grouping','essay','matching'));
     `);
     results.questionbank = "ok";
   } catch (e) {

@@ -6,6 +6,10 @@ import { printReact } from "../../../lib/print";
 import { ExamPaperDoc, AnswerKeyDoc } from "../../../components/printDocs";
 import { useUser, apiFetch } from "../../../lib/useUser";
 
+function emptyGroupColumns() {
+  return [{ name: "", items: [""] }, { name: "", items: [""] }];
+}
+
 function emptyForm() {
   return {
     type: "choice4",
@@ -15,6 +19,7 @@ function emptyForm() {
     correctIndex: 0,
     correctTexts: [""],
     orderItems: ["", ""],
+    groupColumns: emptyGroupColumns(),
   };
 }
 
@@ -25,6 +30,13 @@ function questionToForm(q) {
     : q.correct_answer?.value !== undefined && q.correct_answer?.value !== null
     ? [q.correct_answer.value]
     : [];
+  const groupColumns =
+    q.type === "grouping" && q.data?.columns?.length
+      ? q.data.columns.map((name, idx) => {
+          const colItems = (q.data.items || []).filter((it) => it.columnIndex === idx).map((it) => it.text);
+          return { name, items: colItems.length ? colItems : [""] };
+        })
+      : emptyGroupColumns();
   return {
     type: q.type,
     content: q.content,
@@ -33,6 +45,7 @@ function questionToForm(q) {
     correctIndex: isChoice ? Number(q.correct_answer?.value || 0) : 0,
     correctTexts: q.type === "fill_blank" ? (legacyValues.length ? legacyValues : [""]) : [""],
     orderItems: q.type === "ordering" ? (q.data?.items?.length ? q.data.items : ["", ""]) : ["", ""],
+    groupColumns,
   };
 }
 
@@ -49,6 +62,20 @@ function buildPayload(form) {
     correct_answer = { values: (form.correctTexts || []).map((v) => v.trim()).filter((v) => v !== "") };
   } else if (form.type === "ordering") {
     data = { items: (form.orderItems || []).map((v) => v.trim()).filter((v) => v !== "") };
+  } else if (form.type === "grouping") {
+    const columns = [];
+    const items = [];
+    (form.groupColumns || []).forEach((col) => {
+      const colName = (col.name || "").trim();
+      if (!colName) return;
+      const colIdx = columns.length;
+      columns.push(colName);
+      (col.items || []).forEach((text) => {
+        const t = (text || "").trim();
+        if (t) items.push({ text: t, columnIndex: colIdx });
+      });
+    });
+    data = { columns, items };
   }
   return { type: form.type, content: form.content, points: Number(form.points) || 0, data, correct_answer };
 }
@@ -200,6 +227,93 @@ function QuestionFields({ form, setForm }) {
             + Thêm mục
           </button>
           <div className="text-xs text-mute mt-2">Học sinh sẽ thấy các mục này bị xáo trộn và phải kéo/nhấn mũi tên để sắp xếp lại đúng thứ tự trên.</div>
+        </div>
+      )}
+
+      {form.type === "grouping" && (
+        <div>
+          <label className="text-xs text-mute">Các cột và đáp án đúng của từng cột</label>
+          <div className={`grid gap-3 mt-1 ${form.groupColumns.length > 1 ? "md:grid-cols-2" : ""}`}>
+            {form.groupColumns.map((col, colIdx) => (
+              <div key={colIdx} className="bg-panel2 rounded-pixel p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    className="pxl-input text-sm font-medium"
+                    placeholder={`Tên cột ${colIdx + 1}`}
+                    value={col.name}
+                    onChange={(e) => {
+                      const groupColumns = [...form.groupColumns];
+                      groupColumns[colIdx] = { ...col, name: e.target.value };
+                      setForm({ ...form, groupColumns });
+                    }}
+                    required={colIdx < 2}
+                  />
+                  {form.groupColumns.length > 2 && (
+                    <button
+                      type="button"
+                      className="text-danger text-xs shrink-0"
+                      onClick={() => setForm({ ...form, groupColumns: form.groupColumns.filter((_, j) => j !== colIdx) })}
+                    >
+                      Xóa cột
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-1.5 pl-1">
+                  {col.items.map((text, itemIdx) => (
+                    <div key={itemIdx} className="flex items-center gap-2">
+                      <input
+                        className="pxl-input text-sm"
+                        placeholder={`Đáp án ${itemIdx + 1}`}
+                        value={text}
+                        onChange={(e) => {
+                          const groupColumns = [...form.groupColumns];
+                          const items = [...col.items];
+                          items[itemIdx] = e.target.value;
+                          groupColumns[colIdx] = { ...col, items };
+                          setForm({ ...form, groupColumns });
+                        }}
+                      />
+                      {col.items.length > 1 && (
+                        <button
+                          type="button"
+                          className="text-danger text-xs shrink-0"
+                          onClick={() => {
+                            const groupColumns = [...form.groupColumns];
+                            groupColumns[colIdx] = { ...col, items: col.items.filter((_, j) => j !== itemIdx) };
+                            setForm({ ...form, groupColumns });
+                          }}
+                        >
+                          Xóa
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="pxl-btn-outline text-xs px-2 py-1"
+                    onClick={() => {
+                      const groupColumns = [...form.groupColumns];
+                      groupColumns[colIdx] = { ...col, items: [...col.items, ""] };
+                      setForm({ ...form, groupColumns });
+                    }}
+                  >
+                    + Thêm đáp án vào cột này
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="pxl-btn-outline text-xs px-2 py-1 mt-3"
+            onClick={() => setForm({ ...form, groupColumns: [...form.groupColumns, { name: "", items: [""] }] })}
+          >
+            + Thêm cột
+          </button>
+          <div className="text-xs text-mute mt-2">
+            Học sinh sẽ thấy toàn bộ đáp án của các cột gộp chung 1 ô, phải kéo (hoặc chọn từ danh sách) để xếp từng đáp án vào đúng cột.
+          </div>
         </div>
       )}
 

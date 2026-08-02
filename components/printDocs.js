@@ -13,6 +13,8 @@ export function ExamPaperDoc({ paper, questions }) {
       {questions.map((q, idx) => {
         const orderItems = q.type === "ordering" ? (q.data?.items || []) : [];
         const shuffledIdx = orderItems.length ? seededShuffle(orderItems.map((_, i) => i), `${paper.id}-${q.id}`) : [];
+        const groupItems = q.type === "grouping" ? (q.data?.items || []) : [];
+        const groupShuffledIdx = groupItems.length ? seededShuffle(groupItems.map((_, i) => i), `${paper.id}-${q.id}`) : [];
         return (
           <div className="question" key={q.id}>
             <div className="stem">
@@ -42,6 +44,20 @@ export function ExamPaperDoc({ paper, questions }) {
                   </div>
                 ))}
                 <div className="blank-line">(Ghi số thứ tự đúng 1, 2, 3... vào ô trống cạnh mỗi mục)</div>
+              </div>
+            )}
+            {q.type === "grouping" && (
+              <div>
+                <div className="blank-line" style={{ marginBottom: 6 }}>Các cột: {(q.data?.columns || []).join("   |   ")}</div>
+                <div className="options single-col">
+                  {groupShuffledIdx.map((origIdx) => (
+                    <div className="option" key={origIdx}>
+                      <span className="letter">__</span>
+                      <span><MarkdownRenderer content={groupItems[origIdx].text} inline /></span>
+                    </div>
+                  ))}
+                </div>
+                <div className="blank-line">(Ghi tên cột đúng vào ô trống cạnh mỗi đáp án)</div>
               </div>
             )}
             {(q.type === "essay" || q.type === "matching") && (
@@ -90,6 +106,23 @@ export function AnswerKeyDoc({ paper, questions }) {
                     {(q.data?.items || []).map((text, i) => (
                       <span key={i} style={{ display: "block" }}>
                         {i + 1}. <MarkdownRenderer content={text} inline />
+                      </span>
+                    ))}
+                  </span>
+                )}
+                {q.type === "grouping" && (
+                  <span>
+                    {(q.data?.columns || []).map((colName, colIdx) => (
+                      <span key={colIdx} style={{ display: "block", marginBottom: 4 }}>
+                        <b><MarkdownRenderer content={colName} inline /></b>:{" "}
+                        {(q.data?.items || [])
+                          .filter((it) => it.columnIndex === colIdx)
+                          .map((it, i, arr) => (
+                            <span key={i}>
+                              <MarkdownRenderer content={it.text} inline />
+                              {i < arr.length - 1 && ", "}
+                            </span>
+                          ))}
                       </span>
                     ))}
                   </span>

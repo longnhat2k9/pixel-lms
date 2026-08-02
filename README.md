@@ -81,7 +81,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 > `kind` vào bảng `attempts` (DB Bài làm) để lưu kết quả luyện tập như một bài làm, và thêm cột
 > `show_answers` vào bảng `papers` (DB Đề thi) cho tính năng bật/tắt xem đáp án, và cột
 > `time_limit_minutes` vào bảng `lesson_practice_links` để đặt giờ luyện tập riêng cho từng đề, và cột
-> `notes` vào bảng `sessions` (DB Thi) cho tính năng "Lưu ý ca thi". Việc gọi lại hoàn toàn an toàn,
+> `notes` vào bảng `sessions` (DB Thi) cho tính năng "Lưu ý ca thi", và cập nhật danh sách loại câu
+> hỏi hợp lệ để bao gồm "Xếp nhóm". Việc gọi lại hoàn toàn an toàn,
 > không xóa dữ liệu cũ.
 
 Sau khi deploy xong, mở trình duyệt và truy cập:
@@ -299,6 +300,25 @@ Vài lưu ý kỹ thuật:
   với thứ tự gốc.
 - Khi in đề, các mục cũng được in theo thứ tự xáo trộn (in ổn định theo `paperId`+`questionId`) kèm ô
   trống để học sinh ghi số thứ tự đúng; in đáp án thì liệt kê đúng theo thứ tự gốc giáo viên đã nhập.
+
+---
+
+## 15b. Câu hỏi dạng Xếp nhóm
+
+Loại câu hỏi mới **"Xếp nhóm"** (`grouping`): giáo viên tạo nhiều **cột** (mỗi cột có một tên), rồi thêm
+các đáp án đúng **vào từng cột** riêng biệt lúc soạn. Khi học sinh làm bài/luyện tập, toàn bộ đáp án của
+mọi cột được **gộp chung vào một ô "Chưa xếp"** phía trên, xáo trộn ngẫu nhiên — học sinh kéo-thả từng
+đáp án xuống đúng cột (hoặc dùng ô chọn (dropdown) cạnh mỗi đáp án — tiện hơn khi dùng điện thoại/không
+kéo được). Chấm đúng/sai toàn bộ: **mọi** đáp án phải nằm đúng cột thì mới được tính điểm.
+
+Vài lưu ý kỹ thuật (giống hệt nguyên lý của câu hỏi Sắp xếp):
+- Tên các cột luôn hiển thị đầy đủ ngay từ đầu (không phải bí mật) — chỉ có **cột đúng của từng đáp án**
+  mới bị giấu và xáo trộn thứ tự hiển thị trong ô "Chưa xếp" cho đến khi nộp bài.
+- Thứ tự xáo trộn cố định theo từng bài làm (`attemptId`+`questionId`), tải lại trang giữa chừng không bị
+  đảo lộn lần nữa.
+- Sau khi nộp, nếu đề đang bật "xem đáp án", từng đáp án được tô xanh (đúng cột) hoặc đỏ (sai cột).
+- Khi in đề: liệt kê tên các cột, rồi in danh sách đáp án đã xáo trộn kèm ô trống để học sinh tự ghi tên
+  cột; in đáp án thì liệt kê đáp án đúng theo từng cột.
 
 ---
 

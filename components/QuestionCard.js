@@ -6,6 +6,7 @@ export const TYPE_LABEL = {
   choice4: "4 lựa chọn",
   fill_blank: "Điền khuyết",
   ordering: "Sắp xếp",
+  grouping: "Xếp nhóm",
   essay: "Tự luận",
   matching: "Nối câu",
 };
@@ -92,6 +93,35 @@ export default function QuestionCard({ q, label, onEdit, onDelete }) {
             </div>
           ))}
           <div className="text-[11px] text-mute">Đây là thứ tự đúng — học sinh sẽ thấy các mục này bị xáo trộn.</div>
+        </div>
+      )}
+
+      {q.type === "grouping" && (
+        <div className="space-y-2">
+          {(q.data?.columns || []).length === 0 ? (
+            <span className="text-mute italic text-sm">(chưa có cột nào)</span>
+          ) : (
+            <div className={`grid gap-2 ${q.data.columns.length > 1 ? "md:grid-cols-2" : ""}`}>
+              {q.data.columns.map((colName, colIdx) => (
+                <div key={colIdx} className="bg-panel2 rounded-pixel p-3">
+                  <div className="text-xs font-semibold text-accent mb-1.5">
+                    <MarkdownRenderer content={colName} inline />
+                  </div>
+                  <div className="space-y-1">
+                    {(q.data.items || []).filter((it) => it.columnIndex === colIdx).map((it, i) => (
+                      <div key={i} className="text-sm text-gray-300">
+                        <MarkdownRenderer content={it.text} inline />
+                      </div>
+                    ))}
+                    {(q.data.items || []).filter((it) => it.columnIndex === colIdx).length === 0 && (
+                      <div className="text-xs text-mute italic">(chưa có đáp án)</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="text-[11px] text-mute">Đây là cách xếp đúng — học sinh sẽ thấy tất cả đáp án gộp chung 1 ô để kéo thả vào từng cột.</div>
         </div>
       )}
 

@@ -4,6 +4,7 @@ import Head from "next/head";
 import { useUser, apiFetch } from "../../../lib/useUser";
 import MarkdownRenderer from "../../../components/MarkdownRenderer";
 import OrderingQuestion from "../../../components/OrderingQuestion";
+import GroupingQuestion from "../../../components/GroupingQuestion";
 import { matchFillBlank, fillBlankValues } from "../../../lib/grading";
 
 function useCountdown(deadline, onExpire) {
@@ -260,6 +261,22 @@ export default function ExamTake() {
                   onChange={(next) => setAnswer(q.id, next)}
                   disabled={finished}
                   showResult={hasAnswerKey}
+                />
+              )}
+
+              {q.type === "grouping" && (
+                <GroupingQuestion
+                  columns={q.data?.columns || []}
+                  items={q.data?.items || []}
+                  assignment={given || {}}
+                  onChange={(next) => setAnswer(q.id, next)}
+                  disabled={finished}
+                  showResult={hasAnswerKey}
+                  correctByItem={
+                    hasAnswerKey
+                      ? Object.fromEntries((q.data?.items || []).map((it) => [it.id, it.columnIndex]))
+                      : {}
+                  }
                 />
               )}
 

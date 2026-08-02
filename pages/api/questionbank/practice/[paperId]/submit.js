@@ -1,7 +1,7 @@
 import { DB } from "../../../../../lib/db";
 import { requireRole } from "../../../../../lib/auth";
 import { canPractice } from "../../../../../lib/practiceAccess";
-import { gradeQuestion, matchFillBlank, fillBlankValues, isOrderingCorrect } from "../../../../../lib/grading";
+import { gradeQuestion, matchFillBlank, fillBlankValues, isOrderingCorrect, isGroupingCorrect } from "../../../../../lib/grading";
 
 // Grades a practice attempt on the spot and returns the breakdown + correct
 // answers immediately. Students can repeat this an unlimited number of
@@ -40,6 +40,8 @@ export default async function handler(req, res) {
       isCorrect = matchFillBlank(given, q.correct_answer);
     } else if (q.type === "ordering") {
       isCorrect = isOrderingCorrect(q, given);
+    } else if (q.type === "grouping") {
+      isCorrect = isGroupingCorrect(q, given);
     }
     score += gradeQuestion(q, given);
     if (!showAnswers) {
@@ -51,6 +53,10 @@ export default async function handler(req, res) {
       correctAnswer:
         q.type === "fill_blank" ? fillBlankValues(q.correct_answer)
         : q.type === "ordering" ? (q.data?.items || [])
+        : q.type === "grouping" ? {
+            columns: q.data?.columns || [],
+            items: (q.data?.items || []).map((it, i) => ({ id: i, text: it.text, columnIndex: it.columnIndex })),
+          }
         : (q.correct_answer?.value ?? null),
       points: Number(q.points),
     };
